@@ -94,8 +94,9 @@ Para mais informações ou suporte, entre em nosso [servidor](https://discord.gg
 ## Checklist de Futuras Adições
 
 - [ ] Adição de uma interface gráfica.
+- [ ] Adição da função de Abrir DMs(Package/Amigos)
 - [ ] Adição do KosameFarm.
-- [ ] Adição do trigger clear para apagar mensagens com um comando.
+- [ ] Adição do Trigger Clear para apagar mensagens com um comando.
 - [ ] Adição de atualizações automáticas.
 - [ ] Adição da função de clonar servidores.
 
