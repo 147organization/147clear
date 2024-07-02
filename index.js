@@ -38,10 +38,6 @@ const aviso = "\u001b[43";
 const sleep = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000));
 const VERSAO_ATUAL = "1.0.1"
 
-process.on('SIGINT', function () {
-  menu(client);
-});
-
 async function updatePresence(presence, tempo = false) {
   const activity = {
     pid: process.pid,
