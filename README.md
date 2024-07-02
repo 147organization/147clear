@@ -43,7 +43,7 @@ Você pode transformar este script em um executável usando o `pkg`.
 
 2. **Compile o script:**
     ```sh
-    pkg index.js --targets node14-win-x64 --output 147clear.exe
+    pkg .
     ```
 
 3. **Execute o executável:**
