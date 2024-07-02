@@ -101,6 +101,6 @@ Para mais informações ou suporte, entre em contato conosco através do email: 
 **Aviso:** Este script é fornecido "como está", sem garantias de qualquer tipo. O uso deste script é de sua própria responsabilidade.
 
 ---
-
-147enterprise © 2024. All Rights Reserved.
 <img align="center" alt="GIF" src="https://ik.imagekit.io/147/image.png">
+<br>
+147enterprise © 2024. All Rights Reserved.
