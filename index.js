@@ -579,7 +579,7 @@ async function userInfo() {
   process.title = "147Clear | Userinfo";
 
   await titulo(client.user.username, client.user.id);
-  const boost = await client.api.users[client.user.id]['profile'].get();
+  const boost = await client.api.users['@me']['profile'].get();
   const dms_abertas = await client.api.users['@me']['channels'].get();
 
   let levelboost = {}
