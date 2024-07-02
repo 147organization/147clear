@@ -656,11 +656,6 @@ async function userInfo() {
   menu(client);
 }
 
-
-
-
-
-
 async function clearPackage() {
   console.clear();
   criarConfig();
@@ -725,7 +720,7 @@ async function clearPackage() {
 
 async function menu(client) {
   await updatePresence(theme);
-  process.title = '147Clear | Menu';
+  process.title = `147Clear | Menu | v${VERSAO_ATUAL}`;
   console.clear();
 
   await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
