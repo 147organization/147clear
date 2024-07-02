@@ -103,3 +103,4 @@ Para mais informações ou suporte, entre em contato conosco através do email: 
 ---
 
 147enterprise © 2024. All Rights Reserved.
+<img align="center" alt="GIF" src="https://ik.imagekit.io/147/image.png">
