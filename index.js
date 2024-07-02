@@ -496,7 +496,7 @@ async function processarCanais(zipEntries, whitelist) {
       const user = await fetchUser(recipientId);
       await sleep(parseFloat(config.delay) || 1);
 
-      const dmChannel = await user?.createDM();
+      const dmChannel = await user?.createDM().catch(() => {});
       if (dmChannel) {
         await cleanMessagesFromDM(dmChannel, totalDMs);
         contador++;
