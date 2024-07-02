@@ -32,7 +32,7 @@ const reset = hex('#ffffff');
 const aviso = "\u001b[43";
 
 const sleep = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000));
-const VERSAO_ATUAL = "1.0.1"
+const VERSAO_ATUAL = "1.0.2"
 const rpc = new RPC.Client({ transport: 'ipc' });
 
 try {
@@ -576,74 +576,90 @@ async function cleanMessagesFromDM(dmChannel, totalDMs) {
 
 async function userInfo() {
   console.clear();
-  process.title = "147Clear | Userinfo";
+  process.title = "147Clear | Informações do Usuário";
 
   await titulo(client.user.username, client.user.id);
-  const boost = await client.api.users['@me']['profile'].get();
-  const dms_abertas = await client.api.users['@me']['channels'].get();
+  const impulsionamento = await client.api.users['676590937723371551']['profile'].get();
+  const dmsAbertas = await client.api.users['@me']['channels'].get();
 
-  let levelboost = {}
-  const next = 10;
+  let nivelImpulsionamento = {};
 
-  if (boost.premium_guild_since) {
-    const boost_date = new Date(boost.premium_guild_since);
-    const now = new Date();
+  if (impulsionamento.premium_guild_since) {
+    const dataImpulsionamento = new Date(impulsionamento.premium_guild_since);
+    const agora = new Date();
+    const diferencaMeses = (agora.getFullYear() - dataImpulsionamento.getFullYear()) * 12 + (agora.getMonth() - dataImpulsionamento.getMonth());
 
-    const diff_meses = (now.getFullYear() - boost_date.getFullYear()) * 12 + (now.getMonth() - boost_date.getMonth());
+    const formatarDuracao = (inicio, fim) => {
+      let duracao = '';
+      
+      let anos = fim.getFullYear() - inicio.getFullYear();
+      let meses = fim.getMonth() - inicio.getMonth();
+      let dias = fim.getDate() - inicio.getDate();
+      let horas = fim.getHours() - inicio.getHours();
+      let minutos = fim.getMinutes() - inicio.getMinutes();
 
-    if (diff_meses < 1) {
-      previous = 1;
-      next = 2;
-    }
-
-    const formatDuration = (duration) => {
-      const parts = [];
-      const years = Math.floor(duration / (1000 * 60 * 60 * 24 * 365));
-      const months = Math.floor((duration % (1000 * 60 * 60 * 24 * 365)) / (1000 * 60 * 60 * 24 * 30));
-      const days = Math.floor((duration % (1000 * 60 * 60 * 24 * 30)) / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((duration % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-
-      if (years > 0) parts.push(`${years} ano${years > 1 ? 's' : ''}`);
-      if (months > 0) parts.push(`${months} mes${months > 1 ? 'es' : ''}`);
-      if (days > 0) parts.push(`${days} dia${days > 1 ? 's' : ''}`);
-      if (hours > 0) parts.push(`${hours} hora${hours > 1 ? 's' : ''}`);
-      if (minutes > 0) parts.push(`${minutes} minuto${minutes > 1 ? 's' : ''}`);
-
-      if (parts.length > 1) {
-        const last = parts.pop();
-        return parts.join(', ') + ' e ' + last;
+      if (minutos < 0) {
+        minutos += 60;
+        horas--;
       }
-      return parts[0];
+      if (horas < 0) {
+        horas += 24;
+        dias--;
+      }
+      if (dias < 0) {
+        dias += new Date(fim.getFullYear(), fim.getMonth(), 0).getDate();
+        meses--;
+      }
+      if (meses < 0) {
+        meses += 12;
+        anos--;
+      }
+
+      if (anos > 0) duracao += `${anos} ano${anos > 1 ? 's' : ''}, `;
+      if (meses > 0) duracao += `${meses} mês${meses > 1 ? 'es' : ''}, `;
+      if (dias > 0) duracao += `${dias} dia${dias > 1 ? 's' : ''}, `;
+      if (horas > 0) duracao += `${horas} hora${horas > 1 ? 's' : ''}, `;
+      if (minutos > 0) duracao += `${minutos} minuto${minutos > 1 ? 's' : ''}, `;
+
+      return duracao.slice(0, -2);
     };
 
-    if (diff_meses >= 24) {
-      levelboost = {
-        databoost: `${boost_date.toLocaleString()} (Há ${formatDuration(now - boost_date)})`
+    const niveisMeses = [2, 3, 6, 9, 12, 15, 18, 24];
+    const proximoNivelMes = niveisMeses.find(nivel => diferencaMeses < nivel) || null;
+
+    if (proximoNivelMes !== null) {
+      const dataProxima = new Date(dataImpulsionamento);
+      dataProxima.setMonth(dataImpulsionamento.getMonth() + proximoNivelMes);
+      nivelImpulsionamento = {
+        dataImpulsionamento: `${dataImpulsionamento.toLocaleString()} (Há ${formatarDuracao(dataImpulsionamento, agora)})`,
+        dataProxima: `${dataProxima.toLocaleString()} (Em ${formatarDuracao(agora, dataProxima)})`
       };
     } else {
-      const dataprox_date = new Date(boost_date);
-      dataprox_date.setMonth(dataprox_date.getMonth() + next);
-      levelboost = {
-        databoost: `${boost_date.toLocaleString()} (Há ${formatDuration(now - boost_date)})`,
-        dataprox: `${dataprox_date.toLocaleString()} (Em ${formatDuration(dataprox_date - now)})`
+      nivelImpulsionamento = {
+        dataImpulsionamento: `${dataImpulsionamento.toLocaleString()} (Há ${formatarDuracao(dataImpulsionamento, agora)})`,
+        dataProxima: 'Não sobe mais de nível'
       };
     }
   } else {
-    levelboost = {}
+    nivelImpulsionamento = {};
   }
 
   console.log(`
-   ${reset}├─>${cor} Usuário:${reset} ${client.user.globalName ? `${reset} ${client.user.username} (\`${client.user.globalName}\`) > ${cor} ${client.user.id}` : `${client.user.username} | ${cor} ${client.user.id}`}
-   ${reset}├─>${cor} Duas etapas:${boost.mfa_enabled ? `${hex('#00ff00')} Sim` : `${hex('#ff0000')} Não`}
-   ${reset}├─>${cor} Dms abertas:${reset} ${dms_abertas.length}
-   ${levelboost.databoost ? `${reset}└─>${cor}Boost:
-   ${reset}  ├─> ${cor} Data inicio: ${reset} ${levelboost.databoost}
-   ${reset}  └─> ${cor} Data proximo: ${reset} ${levelboost.dataprox ? levelboost.dataprox : 'Não upa mais'}` : ``}
+    ${reset}├─>${cor} Usuário:${reset} ${client.user.globalName ? `${reset} ${client.user.username} (\`${client.user.globalName}\`) > ${cor} ${client.user.id}` : `${client.user.username} | ${cor} ${client.user.id}`}
+    ${reset}├─>${cor} Duas etapas:${impulsionamento.mfa_enabled ? `${hex('#00ff00')} Sim` : `${hex('#ff0000')} Não`}
+    ${reset}├─>${cor} Dms abertas:${reset} ${dmsAbertas.length}
+    ${nivelImpulsionamento.dataImpulsionamento ? `${reset}└─>${cor}Impulsionamento:
+    ${reset}  ├─> ${cor} Data início: ${reset} ${nivelImpulsionamento.dataImpulsionamento}
+    ${reset}  └─> ${cor} Data próxima: ${reset} ${nivelImpulsionamento.dataProxima}` : ``}
   `);
   readlineSync.question(`${cor}>${reset} Aperte ${cor}ENTER${reset} para voltar`);
   menu(client);
 }
+
+
+
+
+
 
 async function clearPackage() {
   console.clear();
