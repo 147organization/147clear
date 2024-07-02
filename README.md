@@ -1,5 +1,8 @@
 # 147Clear
 
+<img align="center" alt="GIF" src="https://ik.imagekit.io/147/image.png">
+<br>
+
 147Clear é um script poderoso projetado para ajudar a gerenciar sua conta do Discord, com funções básicas para facilitar sua vida.
 
 ## Tabela de Conteúdos
@@ -101,6 +104,5 @@ Para mais informações ou suporte, entre em nosso [servidor](https://discord.gg
 **Aviso:** Este script é fornecido "como está", sem garantias de qualquer tipo. O uso deste script é de sua própria responsabilidade.
 
 ---
-<img align="center" alt="GIF" src="https://ik.imagekit.io/147/image.png">
-<br>
+
 147enterprise © 2024. All Rights Reserved.
