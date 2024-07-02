@@ -7,7 +7,7 @@
 - [Uso](#uso)
 - [Transformar em Executável](#transformar-em-executável)
 - [Abrir um Commit](#abrir-um-commit)
-- [Contato](#contato)
+- [Contato/Suporte](#contato)
 - [Checklist de Futuras Adições](#checklist-de-futuras-adições)
 
 ## Instalação
