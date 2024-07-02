@@ -10,7 +10,6 @@ const config = (() => {
   }
   return require(configPath);
 })();;
-
 const RPC = require('discord-rpc');
 const path = require('path');
 const AdmZip = require('adm-zip');
@@ -27,9 +26,6 @@ const theme = {
   "smallImageText": "idle"
 }
 
-RPC.register(clientId);
-const rpc = new RPC.Client({ transport: 'ipc' });
-
 let cor = hex(config.cor_painel || '#A020F0');
 const erro = hex('#ff0000');
 const reset = hex('#ffffff');
@@ -37,18 +33,38 @@ const aviso = "\u001b[43";
 
 const sleep = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000));
 const VERSAO_ATUAL = "1.0.1"
+const rpc = new RPC.Client({ transport: 'ipc' });
+
+try {
+  RPC.register(clientId);
+  rpc.on('ready', () => {
+    updatePresence(theme);
+  });
+  
+  rpc.login({ clientId }).catch(console.error);
+} catch (error) {
+  console.error('Erro ao inicializar o RPC:', error);
+}
 
 async function updatePresence(presence, tempo = false) {
-  const activity = {
-    pid: process.pid,
-    state: presence.state || theme.state,
-    details: presence.details || theme.details,
-    largeImageKey: presence.largeImageKey || theme.largeImageKey,
-    largeImageText: presence.largeImageText || theme.largeImageText,
-    smallImageKey: presence.smallImageKey || theme.smallImageKey,
-    smallImageText: presence.smallImageText || theme.smallImageText,
-  };
-  await rpc.setActivity(activity);
+  if (!rpc) {
+    console.error('RPC não inicializado');
+    return;
+  }
+  try {
+    const activity = {
+      pid: process.pid,
+      state: presence.state || theme.state,
+      details: presence.details || theme.details,
+      largeImageKey: presence.largeImageKey || theme.largeImageKey,
+      largeImageText: presence.largeImageText || theme.largeImageText,
+      smallImageKey: presence.smallImageKey || theme.smallImageKey,
+      smallImageText: presence.smallImageText || theme.smallImageText,
+    };
+    await rpc.setActivity(activity);
+  } catch (error) {
+    console.error('Erro ao atualizar a presença:', error);
+  }
 }
 
 function hex(hex) {
@@ -782,7 +798,4 @@ verificarToken().then(() => {
   iniciarCliente();
 });
 
-rpc.on('ready', () => {
-  updatePresence(theme);
-});
-rpc.login({ clientId }).catch((e) => { })
+
