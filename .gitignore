@@ -25,3 +25,4 @@ dist-ssr
 # arquives
 
 package-lock.json
+/output/*

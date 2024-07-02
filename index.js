@@ -10,6 +10,7 @@ const config = (() => {
     }
     return require(configPath);
 })();;
+
 const RPC = require('discord-rpc');
 const path = require('path');
 const AdmZip = require('adm-zip');
