@@ -935,9 +935,9 @@ async function menu(client) {
     case '8':
       await userInfo();
       break;
-	case '9':
-	  await abrirDMs();
-	  break;
+    case '9':
+      await abrirDMs();
+      break;
     case '10':
       await configurar();
       break;
