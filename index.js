@@ -850,7 +850,7 @@ async function abrirTodasAsDMs() {
 }
 
 async function selecionarArquivoZip() {
-  if (process.platform === "dsdadsadsa") {
+  if (process.platform === "win32") {
     const psScript = `
       Function Select-ZipFileDialog {
         param([string]$Description="Selecione o ZIP do Discord", [string]$Filter="ZIP files (*.zip)|*.zip")
