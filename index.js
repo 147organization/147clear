@@ -8,11 +8,10 @@ moment.locale('pt-BR')
 const VERSAO_ATUAL = "1.0.3"
 
 const config = (() => {
-  const configPath = './config.json';
-  if (!fs.existsSync(configPath)) {
+  if (!fs.existsSync('./config.json')) {
     criarConfig();
   }
-  return require(configPath);
+  return require('./config.json');
 })();;
 const RPC = require('discord-rpc');
 const path = require('path');
