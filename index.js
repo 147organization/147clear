@@ -4,8 +4,7 @@ const Discord = require('discord.js-selfbot-v13');
 const fetch = require('node-fetch');
 const client = new Discord.Client({ checkUpdate: false });
 const moment = require('moment');
-moment.locale('pt-BR')
-const VERSAO_ATUAL = "1.0.3"
+const VERSAO_ATUAL = "1.0.3";
 
 const config = (() => {
   if (!fs.existsSync('./config.json')) {
@@ -13,6 +12,7 @@ const config = (() => {
   }
   return require('./config.json');
 })();;
+
 const RPC = require('discord-rpc');
 const path = require('path');
 const AdmZip = require('adm-zip');
@@ -36,6 +36,7 @@ const aviso = "\u001b[43";
 
 const sleep = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000));
 const rpc = new RPC.Client({ transport: 'ipc' });
+moment.locale('pt-BR');
 
 try {
   RPC.register(clientId);
