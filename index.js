@@ -3,6 +3,10 @@ const readlineSync = require('readline-sync');
 const Discord = require('discord.js-selfbot-v13');
 const fetch = require('node-fetch');
 const client = new Discord.Client({ checkUpdate: false });
+const moment = require('moment');
+moment.locale('pt-BR')
+const VERSAO_ATUAL = "1.0.3"
+
 const config = (() => {
   const configPath = './config.json';
   if (!fs.existsSync(configPath)) {
@@ -18,7 +22,7 @@ const { timeStamp } = require('console');
 
 const clientId = '1257500388408692800';
 const theme = {
-  "state": "v1.10.2",
+  "state": `v${VERSAO_ATUAL}`,
   "details": "No menu principal",
   "largeImageKey": "fotogrande",
   "largeImageText": "147 😎",
@@ -32,7 +36,6 @@ const reset = hex('#ffffff');
 const aviso = "\u001b[43";
 
 const sleep = seconds => new Promise(resolve => setTimeout(resolve, seconds * 1000));
-const VERSAO_ATUAL = "1.0.2"
 const rpc = new RPC.Client({ transport: 'ipc' });
 
 try {
@@ -585,59 +588,64 @@ async function userInfo() {
   let nivelImpulsionamento = {};
 
   if (impulsionamento.premium_guild_since) {
-    const dataImpulsionamento = new Date(impulsionamento.premium_guild_since);
-    const agora = new Date();
-    const diferencaMeses = (agora.getFullYear() - dataImpulsionamento.getFullYear()) * 12 + (agora.getMonth() - dataImpulsionamento.getMonth());
+    const dataImpulsionamento = moment(impulsionamento.premium_guild_since);
+    const agora = moment();
 
-    const formatarDuracao = (inicio, fim) => {
-      let duracao = '';
-      
-      let anos = fim.getFullYear() - inicio.getFullYear();
-      let meses = fim.getMonth() - inicio.getMonth();
-      let dias = fim.getDate() - inicio.getDate();
-      let horas = fim.getHours() - inicio.getHours();
-      let minutos = fim.getMinutes() - inicio.getMinutes();
+    const niveisMeses = [1, 2, 3, 6, 9, 12, 15, 18, 24];
+    const diff_meses = agora.diff(dataImpulsionamento, 'months');
 
-      if (minutos < 0) {
-        minutos += 60;
-        horas--;
-      }
-      if (horas < 0) {
-        horas += 24;
-        dias--;
-      }
-      if (dias < 0) {
-        dias += new Date(fim.getFullYear(), fim.getMonth(), 0).getDate();
-        meses--;
-      }
-      if (meses < 0) {
-        meses += 12;
-        anos--;
-      }
+    let previous = 0;
+    let next = 0;
 
-      if (anos > 0) duracao += `${anos} ano${anos > 1 ? 's' : ''}, `;
-      if (meses > 0) duracao += `${meses} mês${meses > 1 ? 'es' : ''}, `;
-      if (dias > 0) duracao += `${dias} dia${dias > 1 ? 's' : ''}, `;
-      if (horas > 0) duracao += `${horas} hora${horas > 1 ? 's' : ''}, `;
-      if (minutos > 0) duracao += `${minutos} minuto${minutos > 1 ? 's' : ''}, `;
+    for (const months of niveisMeses) {
+      if (diff_meses >= months) {
+        previous = months;
+      } else {
+        next = months;
+        break;
+      }
+    }
 
-      return duracao.slice(0, -2);
+    if (diff_meses < 1) {
+      previous = 1;
+      next = 2;
+    }
+
+    const formatarDuracao = (duration) => {
+      const partes = [];
+      const anos = duration.years();
+      const meses = duration.months();
+      const dias = duration.days();
+      const horas = duration.hours();
+      const minutos = duration.minutes();
+
+      if (anos > 0) partes.push(`${anos} ano${anos > 1 ? 's' : ''}`);
+      if (meses > 0) partes.push(`${meses} mês${meses > 1 ? 'es' : ''}`);
+      if (dias > 0) partes.push(`${dias} dia${dias > 1 ? 's' : ''}`);
+      if (horas > 0) partes.push(`${horas} hora${horas > 1 ? 's' : ''}`);
+      if (minutos > 0) partes.push(`${minutos} minuto${minutos > 1 ? 's' : ''}`);
+
+      if (partes.length > 1) {
+        const ultimo = partes.pop();
+        return partes.join(', ') + ' e ' + ultimo;
+      }
+      return partes[0];
     };
 
-    const niveisMeses = [2, 3, 6, 9, 12, 15, 18, 24];
-    const proximoNivelMes = niveisMeses.find(nivel => diferencaMeses < nivel) || null;
+    const calcularProximaData = (inicio, meses) => {
+      return moment(inicio).add(meses, 'months');
+    };
 
-    if (proximoNivelMes !== null) {
-      const dataProxima = new Date(dataImpulsionamento);
-      dataProxima.setMonth(dataImpulsionamento.getMonth() + proximoNivelMes);
+    if (diff_meses >= 24) {
       nivelImpulsionamento = {
-        dataImpulsionamento: `${dataImpulsionamento.toLocaleString()} (Há ${formatarDuracao(dataImpulsionamento, agora)})`,
-        dataProxima: `${dataProxima.toLocaleString()} (Em ${formatarDuracao(agora, dataProxima)})`
+        dataImpulsionamento: `${dataImpulsionamento.format('lll')} (Há ${formatarDuracao(moment.duration(agora.diff(dataImpulsionamento)))})`,
+        dataProxima: 'Não sobe mais de nível'
       };
     } else {
+      const dataProxima = calcularProximaData(dataImpulsionamento, next);
       nivelImpulsionamento = {
-        dataImpulsionamento: `${dataImpulsionamento.toLocaleString()} (Há ${formatarDuracao(dataImpulsionamento, agora)})`,
-        dataProxima: 'Não sobe mais de nível'
+        dataImpulsionamento: `${dataImpulsionamento.format('lll')} (Há ${formatarDuracao(moment.duration(agora.diff(dataImpulsionamento)))})`,
+        dataProxima: `${dataProxima.format('lll')} (Em ${formatarDuracao(moment.duration(dataProxima.diff(agora)))})`
       };
     }
   } else {
@@ -655,6 +663,7 @@ async function userInfo() {
   readlineSync.question(`${cor}>${reset} Aperte ${cor}ENTER${reset} para voltar`);
   menu(client);
 }
+
 
 async function clearPackage() {
   console.clear();
