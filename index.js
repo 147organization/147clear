@@ -785,9 +785,11 @@ async function abrirDMsComAmigos() {
       contador++;
       process.title = `147Clear | Abrir DMs | ${contador}/${amigos.length} DMs abertas`;
       const porcentagem = ((contador) / amigos.length) * 100;
-      const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
-
+      const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']'; 
       console.clear();
+      await updatePresence({
+        details: `Abrindo dms com amigos ${contador}/${amigos.length} [${Math.round(porcentagem)}%]`,
+      });
       await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
       console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${amigos.length} DMs abertas`);
     }).catch(() => {});
@@ -838,8 +840,10 @@ async function abrirTodasAsDMs() {
         process.title = `147Clear | Abrir DMs | ${contador}/${totalDMs} DMs abertas`;
         const porcentagem = ((contador) / totalDMs) * 100;
         const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
-
         console.clear();
+        await updatePresence({
+          details: `Abrindo todas as DMs ${contador}/${amigos.length} [${Math.round(porcentagem)}%]`,
+        });
         await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
         console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${totalDMs} DMs abertas`);
       }).catch(() => {});
