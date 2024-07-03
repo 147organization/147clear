@@ -692,7 +692,6 @@ async function clearPackage() {
   const tem = readlineSync.question('> ');
   if (tem !== "1") return menu(client);
   
-  console.clear();
   if (process.platform === "win32") {
     const child = child_process.spawnSync('powershell.exe', ["-Command", psScript], { encoding: 'utf8' });
     const path = child.stdout.toString().trim();
@@ -706,6 +705,7 @@ async function clearPackage() {
     const buffer_zip = fs.readFileSync(path);
     const zipEntries = new AdmZip(buffer_zip).getEntries();
 
+    console.clear();
     console.log("Insira os IDs que você não deseja apagar (id, id, id). caso não tenha nenhum aperte ENTER.");
     const whitelist = readlineSync.question('> ');
     const ids_whitelist = whitelist.split(/,\s*/);
@@ -719,6 +719,7 @@ async function clearPackage() {
       await menu(client);
     }
 
+    console.clear();
     console.log("Insira os IDs que você não deseja apagar (id, id, id). caso não tenha nenhum aperte ENTER.")
     const whitelist = readlineSync.question('> ');
     const ids_whitelist = whitelist.split(/,\s*/);
