@@ -4,11 +4,10 @@ const Discord = require('discord.js-selfbot-v13');
 const fetch = require('node-fetch');
 const client = new Discord.Client({ checkUpdate: false });
 const config = (() => {
-  const configPath = './config.json';
-  if (!fs.existsSync(configPath)) {
+  if (!fs.existsSync('./config.json')) {
     criarConfig();
   }
-  return require(configPath);
+  return require('./config.json');
 })();;
 const RPC = require('discord-rpc');
 const path = require('path');
