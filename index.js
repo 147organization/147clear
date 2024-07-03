@@ -680,6 +680,19 @@ async function clearPackage() {
   Write-Output $zipFile
   `;
 
+  console.log(`
+  ${cor}Você precisa ter o pacote de dados do Discord em mãos, você o tem?
+  
+  [!] ${reset}Como pegá-lo: Configurações > Privacidade & Segurança > Solicitar dados (marque Mensagens). O .ZIP chegará no e-mail, prazo varia conforme a idade da conta.
+  
+  ${cor}[ 1 ]${reset} Tenho
+  ${cor}[ 2 ]${reset} Não tenho
+  `)
+  
+  const tem = readlineSync.question('> ');
+  if (tem !== "1") return menu(client);
+  
+  console.clear();
   if (process.platform === "win32") {
     const child = child_process.spawnSync('powershell.exe', ["-Command", psScript], { encoding: 'utf8' });
     const path = child.stdout.toString().trim();
@@ -808,5 +821,3 @@ async function iniciarCliente() {
 verificarToken().then(() => {
   iniciarCliente();
 });
-
-
