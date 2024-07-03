@@ -457,7 +457,7 @@ async function configurar() {
       }
     },
     "3": async () => {
-      menu(client);
+      return menu(client);
     },
     "default": async () => {
       console.clear();
@@ -653,9 +653,9 @@ async function userInfo() {
   }
 
   console.log(`
-    ${reset}├─>${cor} Usuário:${reset} ${client.user.globalName ? `${reset} ${client.user.username} (\`${client.user.globalName}\`) > ${cor} ${client.user.id}` : `${client.user.username} | ${cor} ${client.user.id}`}
+    ${reset}├─>${cor} Usuário:${reset} ${client.user.globalName ? `${reset} ${client.user.username} (\`${client.user.globalName}\`) > ${cor}${client.user.id}` : `${client.user.username} | ${cor}${client.user.id}`}
     ${reset}├─>${cor} Duas etapas:${impulsionamento.mfa_enabled ? `${hex('#00ff00')} Sim` : `${hex('#ff0000')} Não`}
-    ${reset}├─>${cor} Dms abertas:${reset} ${dmsAbertas.length}
+    ${reset}├─>${cor} DMs abertas:${reset} ${dmsAbertas.length}
     ${nivelImpulsionamento.dataImpulsionamento ? `${reset}└─>${cor}Impulsionamento:
     ${reset}  ├─> ${cor} Data início: ${reset} ${nivelImpulsionamento.dataImpulsionamento}
     ${reset}  └─> ${cor} Data próxima: ${reset} ${nivelImpulsionamento.dataProxima}` : ``}
@@ -663,7 +663,6 @@ async function userInfo() {
   readlineSync.question(`${cor}>${reset} Aperte ${cor}ENTER${reset} para voltar`);
   menu(client);
 }
-
 
 async function clearPackage() {
   console.clear();
@@ -741,6 +740,150 @@ async function clearPackage() {
   menu(client);
 }
 
+async function abrirDMs() {
+  console.clear();
+  criarConfig();
+  const config = require('./config.json');
+
+  process.title = "147Clear | Abrir DMs";
+  console.log(`
+    ${cor}[ 1 ]${reset} Abrir DMs com amigos
+    ${cor}[ 2 ]${reset} Abrir todas as DMs com quem conversou (package)
+  `);
+  const opcao = readlineSync.question('> ');
+
+  if (opcao === "1") {
+    await abrirDMsComAmigos();
+  } else if (opcao === "2") {
+    await abrirTodasAsDMs();
+  } else {
+    console.clear();
+    console.log(`${erro}[X] ${reset}Opção inválida, tente novamente.`);
+    await sleep(1.5);
+    await abrirDMs();
+  }
+
+  menu(client);
+}
+
+async function abrirDMsComAmigos() {
+  const amigos = client.relationships.cache.filter(value => value === 1).map((value, key) => key);
+  let contador = 0;
+
+  if (!amigos.length) {
+    console.clear();
+    console.log(`${erro}[X]${reset} Você não tem amigos :(`);
+    await sleep(5);
+    await abrirDMs();
+    return;
+  }
+
+  for (const amigo of amigos) {
+    const amigokk = await client.users.fetch(amigo).catch(() => {});
+    await sleep(1.7);
+    await amigokk.createDM().then(async () => {
+      contador++;
+      process.title = `147Clear | Abrir DMs | ${contador}/${amigos.length} DMs abertas`;
+      const porcentagem = ((contador) / amigos.length) * 100;
+      const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
+
+      console.clear();
+      await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
+      console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${amigos.length} DMs abertas`);
+    }).catch(() => {});
+  }
+
+  menu(client);
+}
+
+async function abrirTodasAsDMs() {
+  console.clear();
+  console.log(`
+    ${cor}Você precisa ter o pacote de dados do Discord em mãos, você o tem?
+  
+    [!] ${reset}Como pegá-lo: Configurações > Privacidade & Segurança > Solicitar dados (marque Mensagens). O .ZIP chegará no e-mail, prazo varia conforme a idade da conta.
+  
+    ${cor}[ 1 ]${reset} Tenho
+    ${cor}[ 2 ]${reset} Não tenho
+  `);
+
+  const tem = readlineSync.question('> ');
+  if (tem !== "1") return menu(client);
+
+  const path = await selecionarArquivoZip();
+  if (!path) {
+    console.clear();
+    console.log(`${erro}[X]${reset} Você não selecionou o ZIP.`);
+    await sleep(5);
+    await menu(client);
+    return;
+  }
+
+  const buffer_zip = fs.readFileSync(path);
+  const zipEntries = new AdmZip(buffer_zip).getEntries();
+  let totalDMs = await contarDMs(zipEntries);
+  let contador = 0;
+
+  for (const entry of zipEntries) {
+    if (!canalValido(entry)) continue;
+
+    const channelData = dadosCanal(entry);
+    if (!ehDMGrupo(channelData)) continue;
+
+    for (const recipientId of pegarRecipients(channelData.recipients)) {
+      const user = await fetchUser(recipientId);
+      await sleep(parseFloat(config.delay) || 1);
+      await user?.createDM().then(async () => {
+        contador++;
+        process.title = `147Clear | Abrir DMs | ${contador}/${totalDMs} DMs abertas`;
+        const porcentagem = ((contador) / totalDMs) * 100;
+        const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
+
+        console.clear();
+        await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
+        console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${totalDMs} DMs abertas`);
+      }).catch(() => {});
+    }
+  }
+
+  menu(client);
+}
+
+async function selecionarArquivoZip() {
+  if (process.platform === "dsdadsadsa") {
+    const psScript = `
+      Function Select-ZipFileDialog {
+        param([string]$Description="Selecione o ZIP do Discord", [string]$Filter="ZIP files (*.zip)|*.zip")
+
+        [System.Reflection.Assembly]::LoadWithPartialName("System.Windows.Forms") | Out-Null
+
+        $objForm = New-Object System.Windows.Forms.OpenFileDialog
+        $objForm.Filter = $Filter
+        $objForm.Title = $Description
+        $Show = $objForm.ShowDialog()
+        If ($Show -eq "OK") {
+            Return $objForm.FileName
+        }
+      }
+
+      $zipFile = Select-ZipFileDialog
+      Write-Output $zipFile
+    `;
+
+    const child = child_process.spawnSync('powershell.exe', ["-Command", psScript], { encoding: 'utf8' });
+    return child.stdout.toString().trim();
+  } else {
+    if (!fs.existsSync('package.zip')) {
+      console.clear();
+      console.log(`${erro}[X]${reset} Não achei o arquivo "package.zip", coloque-o na mesma pasta que eu(${path.basename(__filename)}) e tente novamente.`);
+      await sleep(8);
+      return menu(client);
+    }
+
+    return 'package.zip';
+  }
+}
+
 async function menu(client) {
   await updatePresence(theme);
   process.title = `147Clear | Menu | v${VERSAO_ATUAL}`;
@@ -754,17 +897,17 @@ async function menu(client) {
   console.log(`                                                  
       ${cor}[ 1 ]${reset} Apagar DM única
       ${cor}[ 2 ]${reset} Apagar DMs abertas
-      ${cor}[ 3 ]${reset} Apagar package
+      ${cor}[ 3 ]${reset} Apagar package (todas as DMs da conta)
       ${cor}[ 4 ]${reset} Remover amigos
       ${cor}[ 5 ]${reset} Remover servidores
       ${cor}[ 6 ]${reset} Fechar DMs
       ${cor}[ 7 ]${reset} Kosame Farm
       ${cor}[ 8 ]${reset} Userinfo
+      ${cor}[ 9 ]${reset} Abrir DMs
     
-      ${cor}[ 9 ]${reset} Customizar
-      ${cor}[ 10 ]${reset} Sair
+      ${cor}[ 10 ]${reset} Customizar
+      ${cor}[ 11 ]${reset} Sair
 `);
-
 
   const opcao = readlineSync.question('> ');
   switch (opcao) {
@@ -792,10 +935,13 @@ async function menu(client) {
     case '8':
       await userInfo();
       break;
-    case '9':
+	case '9':
+	  await abrirDMs();
+	  break;
+    case '10':
       await configurar();
       break;
-    case '10':
+    case '11':
     case 'sair':
       console.clear();
       process.exit(0);
