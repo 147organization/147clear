@@ -48,9 +48,8 @@ try {
 } catch {}
 
 async function updatePresence(presence, tempo = false) {
-  if (!rpc) {
-    return;
-  }
+  if (!rpc) return;
+
   try {
     const activity = {
       pid: process.pid,
