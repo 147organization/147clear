@@ -972,10 +972,10 @@ async function utilidadesCall() {
           }
         }
       }
-	  await menu(client);
+      await menu(client);
       break;
     case '1':
-	  console.log("Digite o ID da call que você deseja desconectar todos os usuários")
+      console.log("Digite o ID da call que você deseja desconectar todos os usuários")
       const moveChannelId2 = readlineSync.question('> ');
       console.clear();
 
@@ -996,7 +996,7 @@ async function utilidadesCall() {
 
       const moveChannel2 = client.channels.cache.get(moveChannelId2);
       if (!moveChannel2 || moveChannel2.type !== 'GUILD_VOICE') {
-		console.clear();
+	console.clear();
         console.log(`${erro}[X]${reset} ID inválido.`);
         await sleep(3.5);
         await menu(client);
@@ -1012,7 +1012,7 @@ async function utilidadesCall() {
       }
 
       const members2 = Array.from(moveChannel2.members.values());
-	  let deuerrokk = false;
+      let deuerrokk = false;
 
       for (const member of members2) {
         const user = client.users.cache.get(member.id);
