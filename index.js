@@ -49,7 +49,6 @@ try {
 
 async function updatePresence(presence, tempo = false) {
   if (!rpc) {
-    console.error('RPC não inicializado');
     return;
   }
   try {
