@@ -44,10 +44,8 @@ try {
     updatePresence(theme);
   });
   
-  rpc.login({ clientId }).catch(console.error);
-} catch (error) {
-  console.error('Erro ao inicializar o RPC:', error);
-}
+  rpc.login({ clientId }).catch(() => {});
+} catch {}
 
 async function updatePresence(presence, tempo = false) {
   if (!rpc) {
@@ -888,6 +886,164 @@ async function selecionarArquivoZip() {
   }
 }
 
+async function utilidadesCall() {
+  console.clear();
+  process.title = "147Clear | Utilidades de call"
+
+  console.log(`
+    Você deseja desconectar ou mover todos da call?
+    
+    ${cor}[ 1 ]${reset} Desconectar
+    ${cor}[ 2 ]${reset} Mover
+  `);
+  const move_ou_disconnect = readlineSync.question('> ');
+  console.clear();
+
+  switch (move_ou_disconnect) {
+    case '2':
+      console.log("Digite o ID da call que os membros estão");
+      const disconnectChannelId = readlineSync.question('> ');
+
+      console.clear();
+      console.log("Digite o ID da call que os membros vão ser movidos");
+      const moveChannelId = readlineSync.question('> ');
+
+      console.clear();
+      console.log(`
+    Tem certeza que deseja fazer isso?
+        
+    ${cor}[ 1 ]${reset} Sim
+    ${cor}[ 2 ]${reset} Não
+      `);
+      const confirmMove = readlineSync.question('> ');
+      if (confirmMove !== "1") {
+        console.clear();
+        await sleep(1.5);
+        await menu(client);
+        return;
+      }
+
+      const disconnectChannel = client.channels.cache.get(disconnectChannelId);
+      const moveChannel = client.channels.cache.get(moveChannelId);
+
+      if (!disconnectChannel || !moveChannel || disconnectChannel.type !== 'GUILD_VOICE' || moveChannel.type !== 'GUILD_VOICE') {
+        console.clear();
+        console.log(`${erro}[X]${reset} ID inválido.`);
+        await sleep(3.5);
+        await menu(client);
+        return;
+      }
+
+      if (!disconnectChannel.members.size) {
+        console.clear();
+        console.log(`${erro}[X]${reset} A call está vazia.`);
+        await sleep(3.5);
+        await menu(client);
+        return;
+      }
+
+      const members = Array.from(disconnectChannel.members.values());
+      let deuerro = false;
+
+      for (const member of members) {
+        if (moveChannel.locked || moveChannel.full) {
+          console.clear();
+          console.log(`${erro}[X]${reset} A call está privada ou lotada.`);
+          await sleep(3.5);
+          await menu(client);
+          break;
+        }
+
+        try {
+          await disconnectChannel.members.get(member.id).voice.setChannel(moveChannel.id);
+          if (member.id !== client.user.id) {
+            console.log(`${cor}[+]${reset} ${member.user.username} movido para o canal ${moveChannel.name}`);
+          }
+        } catch (err) {
+          if (err.message === "Missing Permissions") {
+            if (!deuerro) {
+              console.clear();
+              console.log(`${erro}[X]${reset} Você não tem permissão.`);
+              await sleep(3.5);
+              await menu(client);
+              deuerro = true;
+            }
+            break;
+          }
+        }
+      }
+	  await menu(client);
+      break;
+    case '1':
+	  console.log("Digite o ID da call que você deseja desconectar todos os usuários")
+      const moveChannelId2 = readlineSync.question('> ');
+      console.clear();
+
+      console.log(`
+    Tem certeza que deseja fazer isso?
+        
+    ${cor}[ 1 ]${reset} Sim
+    ${cor}[ 2 ]${reset} Não
+      `);
+      const confirmDisconnect = readlineSync.question('> ');
+
+      if (confirmDisconnect !== '1') {
+        console.clear();
+        await sleep(1.5);
+        await menu(client);
+        return;
+      }
+
+      const moveChannel2 = client.channels.cache.get(moveChannelId2);
+      if (!moveChannel2 || moveChannel2.type !== 'GUILD_VOICE') {
+		console.clear();
+        console.log(`${erro}[X]${reset} ID inválido.`);
+        await sleep(3.5);
+        await menu(client);
+        return;
+      }
+
+      if (!moveChannel2.members.size) {
+        console.clear();
+        console.log(`${erro}[X]${reset} A call está vazia.`);
+        await sleep(3.5);
+        await menu(client);
+        return;
+      }
+
+      const members2 = Array.from(moveChannel2.members.values());
+	  let deuerrokk = false;
+
+      for (const member of members2) {
+        const user = client.users.cache.get(member.id);
+        try {
+          await moveChannel2.members.get(member.id).voice.setChannel(null);
+          console.log(`${cor}[+]${reset} ${user.tag} desconectado da call ${moveChannel2.name}`);
+        } catch (err) {
+          if (err.message === "Missing Permissions") {
+            if (!deuerrokk) {
+              console.clear();
+              console.log(`${erro}[X]${reset} Você não tem permissão.`);
+              await sleep(3.5);
+              await menu(client);
+              deuerrokk = true;
+            }
+            break;
+          }
+        }
+      }
+
+      await menu(client);
+      break;
+    default:
+      console.clear();
+      console.log(`${erro}[X] ${reset}Opção inválida, tente novamente.`);
+      await sleep(1.5);
+      await menu(client);
+      break;
+  }
+}
+
 async function menu(client) {
   await updatePresence(theme);
   process.title = `147Clear | Menu | v${VERSAO_ATUAL}`;
@@ -901,16 +1057,17 @@ async function menu(client) {
   console.log(`                                                  
       ${cor}[ 1 ]${reset} Apagar DM única
       ${cor}[ 2 ]${reset} Apagar DMs abertas
-      ${cor}[ 3 ]${reset} Apagar package (todas as DMs da conta)
+      ${cor}[ 3 ]${reset} Apagar package
       ${cor}[ 4 ]${reset} Remover amigos
       ${cor}[ 5 ]${reset} Remover servidores
       ${cor}[ 6 ]${reset} Fechar DMs
       ${cor}[ 7 ]${reset} Kosame Farm
       ${cor}[ 8 ]${reset} Userinfo
       ${cor}[ 9 ]${reset} Abrir DMs
+      ${cor}[ 10 ]${reset} Utilidades de call
     
-      ${cor}[ 10 ]${reset} Customizar
-      ${cor}[ 11 ]${reset} Sair
+      ${cor}[ 11 ]${reset} Customizar
+      ${cor}[ 12 ]${reset} Sair
 `);
 
   const opcao = readlineSync.question('> ');
@@ -943,9 +1100,12 @@ async function menu(client) {
       await abrirDMs();
       break;
     case '10':
-      await configurar();
+      await utilidadesCall();
       break;
     case '11':
+	  await configurar();
+	  break;
+	case '12':
     case 'sair':
       console.clear();
       process.exit(0);
