@@ -646,9 +646,8 @@ async function userInfo() {
 
   console.log(`
     ${reset}├─>${cor} Usuário:${reset} ${client.user.globalName ? `${reset} ${client.user.username} (\`${client.user.globalName}\`) > ${cor}${client.user.id}` : `${client.user.username} | ${cor}${client.user.id}`}
-    ${reset}├─>${cor} Duas etapas:${impulsionamento.mfa_enabled ? `${hex('#00ff00')} Sim` : `${hex('#ff0000')} Não`}
     ${reset}├─>${cor} DMs abertas:${reset} ${dmsAbertas.length}
-    ${nivelImpulsionamento.dataImpulsionamento ? `${reset}└─>${cor}Impulsionamento:
+    ${nivelImpulsionamento.dataImpulsionamento ? `${reset}└─>${cor} Boost:
     ${reset}  ├─> ${cor} Data início: ${reset} ${nivelImpulsionamento.dataImpulsionamento}
     ${reset}  └─> ${cor} Data próxima: ${reset} ${nivelImpulsionamento.dataProxima}` : ``}
   `);
