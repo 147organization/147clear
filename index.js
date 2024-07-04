@@ -4,17 +4,17 @@ const Discord = require('discord.js-selfbot-v13');
 const fetch = require('node-fetch');
 const client = new Discord.Client({ checkUpdate: false });
 const moment = require('moment');
-const VERSAO_ATUAL = "1.0.5";
+const path = require('path');
+const VERSAO_ATUAL = "1.0.6";
 
 const config = (() => {
   if (!fs.existsSync('./config.json')) {
     criarConfig();
   }
-  return require('./config.json');
-})();;
+  return JSON.parse(fs.readFileSync(path.join(process.cwd(), 'config.json'), 'utf8'));
+})();
 
 const RPC = require('discord-rpc');
-const path = require('path');
 const AdmZip = require('adm-zip');
 const child_process = require("child_process");
 const { timeStamp } = require('console');
@@ -186,7 +186,6 @@ async function clearUnica() {
   criarConfig();
 
   process.title = '147Clear | Limpar com DM única';
-  const config = require('./config.json');
   console.log("Insira o ID do usuário.");
   let id = readlineSync.question('> ');
 
@@ -248,7 +247,6 @@ async function clearAbertas() {
   criarConfig();
 
   process.title = '147Clear | Limpar com DMs abertas';
-  const config = require('./config.json');
   const dms = await client.channels.cache.filter(c => c.type == "DM").map(a => a);
   let contador = 0;
 
@@ -478,7 +476,6 @@ async function kosameFarm() {
 
 async function processarCanais(zipEntries, whitelist) {
   criarConfig();
-  const config = require('./config.json');
 
   let totalDMs = await contarDMs(zipEntries);
   let contador = 0;
@@ -555,7 +552,6 @@ async function fetchUser(userId) {
 
 async function cleanMessagesFromDM(dmChannel, totalDMs) {
   criarConfig();
-  const config = require('./config.json');
   const messages = await fetchMsgs(dmChannel.id);
 
   for (const msg of messages) {
@@ -739,7 +735,6 @@ async function clearPackage() {
 async function abrirDMs() {
   console.clear();
   criarConfig();
-  const config = require('./config.json');
 
   process.title = "147Clear | Abrir DMs";
   console.log(`
