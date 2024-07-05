@@ -183,7 +183,6 @@ async function verificarToken() {
 
 async function clearUnica() {
   console.clear();
-  criarConfig();
 
   process.title = '147Clear | Limpar com DM única';
   console.log("Insira o ID do usuário.");
@@ -244,7 +243,6 @@ async function clearUnica() {
 
 async function clearAbertas() {
   console.clear();
-  criarConfig();
 
   process.title = '147Clear | Limpar com DMs abertas';
   const dms = await client.channels.cache.filter(c => c.type == "DM").map(a => a);
@@ -296,7 +294,6 @@ async function clearAbertas() {
 
 async function removerAmigos() {
   console.clear();
-  criarConfig();
 
   process.title = '147Clear | Remover amigos';
   const amigos = client.relationships.cache.filter(value => value === 1).map((value, key) => key);
@@ -332,7 +329,6 @@ async function removerAmigos() {
 
 async function removerServidores() {
   console.clear();
-  criarConfig();
 
   process.title = '147Clear | Remover servidores';
   const servers = client.guilds.cache.map(a => a);
@@ -366,7 +362,6 @@ async function removerServidores() {
 
 async function fecharDMs() {
   console.clear();
-  criarConfig();
 
   process.title = '147Clear | Fechar DMs';
   const dms = await client.channels.cache.filter(c => c.type == "DM").map(a => a);
@@ -400,7 +395,6 @@ async function fecharDMs() {
 
 async function configurar() {
   console.clear();
-  criarConfig();
 
   process.title = '147Clear | Configuração';
   await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
@@ -467,7 +461,6 @@ async function configurar() {
 
 async function kosameFarm() {
   console.clear();
-  criarConfig();
 
   console.log("Implementar depois.");
   await sleep(3.5);
@@ -551,7 +544,6 @@ async function fetchUser(userId) {
 }
 
 async function cleanMessagesFromDM(dmChannel, totalDMs) {
-  criarConfig();
   const messages = await fetchMsgs(dmChannel.id);
 
   for (const msg of messages) {
@@ -571,6 +563,7 @@ async function cleanMessagesFromDM(dmChannel, totalDMs) {
 
 async function userInfo() {
   console.clear();
+	
   process.title = "147Clear | Informações do Usuário";
 
   await titulo(client.user.username, client.user.id);
@@ -657,7 +650,7 @@ async function userInfo() {
 
 async function clearPackage() {
   console.clear();
-  criarConfig();
+	
   process.title = "147Clear | Apagar package"
 
   const psScript = `
@@ -733,7 +726,6 @@ async function clearPackage() {
 
 async function abrirDMs() {
   console.clear();
-  criarConfig();
 
   process.title = "147Clear | Abrir DMs";
   console.log(`
@@ -884,6 +876,7 @@ async function selecionarArquivoZip() {
 
 async function utilidadesCall() {
   console.clear();
+	
   process.title = "147Clear | Utilidades de call"
 
   console.log(`
@@ -1041,10 +1034,11 @@ async function utilidadesCall() {
 }
 
 async function menu(client) {
-  await updatePresence(theme);
-  process.title = `147Clear | Menu | v${VERSAO_ATUAL}`;
   console.clear();
 
+  process.title = `147Clear | Menu | v${VERSAO_ATUAL}`;
+	
+  await updatePresence(theme);
   await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
   if (await checarUpdates()) {
     console.log(`        ${cor}[!]${reset} Há uma atualização disponível, vá em https://github.com/147organization/147clear`);
