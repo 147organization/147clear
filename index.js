@@ -739,6 +739,8 @@ async function abrirDMs() {
   console.log(`
     ${cor}[ 1 ]${reset} Abrir DMs com amigos
     ${cor}[ 2 ]${reset} Abrir todas as DMs com quem conversou (package)
+
+    ${cor}[ 3 ]${reset} Voltar
   `);
   const opcao = readlineSync.question('> ');
 
@@ -746,11 +748,13 @@ async function abrirDMs() {
     await abrirDMsComAmigos();
   } else if (opcao === "2") {
     await abrirTodasAsDMs();
+  } else if (opcao === "3") {
+    return await menu(client);
   } else {
     console.clear();
     console.log(`${erro}[X] ${reset}Opção inválida, tente novamente.`);
     await sleep(1.5);
-    await abrirDMs();
+    await menu(client);
   }
 
   menu(client);
