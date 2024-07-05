@@ -1099,9 +1099,9 @@ async function menu(client) {
       await utilidadesCall();
       break;
     case '11':
-	  await configurar();
-	  break;
-	case '12':
+      await configurar();
+      break;
+    case '12':
     case 'sair':
       console.clear();
       process.exit(0);
