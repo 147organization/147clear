@@ -1006,9 +1006,9 @@ async function utilidadesCall() {
 
       await menu(client);
       break;
-	case '3':
-	  await menu(client);
-	  break;
+    case '3':
+      await menu(client);
+      break;
     default:
       console.clear();
       console.log(`${erro}[X] ${reset}Opção inválida, tente novamente.`);
