@@ -152,7 +152,7 @@ function escreverToken(nome, token) {
 
 async function pedirToken() {
   while (true) {
-	const token = readlineSync.question('Token: ');
+    const token = readlineSync.question('Token: ');
     const nome = readlineSync.question('Nome para representar a token: ');
 
     if (await validarToken(token)) {
@@ -1124,7 +1124,7 @@ async function iniciarCliente() {
 
     process.title = "147Clear | Selecionar token"
     console.clear();
-	console.log(`  Escolha uma token para logar.\n`)
+    console.log(`  Escolha uma token para logar.\n`)
 	
     tokensValidos.forEach((t, index) => {
       console.log(`  ${cor}[ ${index + 1} ]${reset} ${t.nome}`);
@@ -1140,8 +1140,7 @@ async function iniciarCliente() {
       console.log("Opção inválida.");
       await iniciarCliente();
     }
-  } catch (error) {
-	console.log(error);
+  } catch {
     console.log("Falha ao fazer login, verifique seu token.");
     await pedirToken();
     await iniciarCliente();
