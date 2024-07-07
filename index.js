@@ -1146,7 +1146,7 @@ async function iniciarCliente() {
     const opcao = readlineSync.question('\n> ');
     
     if (parseInt(opcao) === tokensValidos.length + 1) {
-	  console.clear();
+      console.clear();
       await pedirToken();
       await iniciarCliente();
       return;
