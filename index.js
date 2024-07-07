@@ -61,9 +61,7 @@ async function updatePresence(presence, tempo = false) {
       smallImageText: presence.smallImageText || theme.smallImageText,
     };
     await rpc.setActivity(activity);
-  } catch (error) {
-    console.error('Erro ao atualizar a presença:', error);
-  }
+  } catch {}
 }
 
 function hex(hex) {
@@ -121,7 +119,7 @@ async function titulo(username, userId) {
 
 function criarConfig() {
   const configData = {
-    "token": "",
+    "tokens": [],
     "cor_painel": "#A020F0",
     "delay": "1",
     "kosame": {
@@ -134,29 +132,35 @@ function criarConfig() {
   if (!fs.existsSync('config.json')) {
     fs.writeFileSync('config.json', JSON.stringify(configData, null, 4));
   } else {
-    const currentConfig = JSON.parse(fs.readFileSync('config.json'));
-    if (!currentConfig.token || !currentConfig.delay) {
+    try {
+      const currentConfig = JSON.parse(fs.readFileSync('config.json'));
+      if (!currentConfig.tokens || !Array.isArray(currentConfig.tokens)) {
+        throw new Error();
+      }
+    } catch (error) {
       fs.writeFileSync('config.json', JSON.stringify(configData, null, 4));
     }
   }
 }
 
-function escreverToken(token) {
+function escreverToken(nome, token) {
   criarConfig();
   const currentConfig = JSON.parse(fs.readFileSync('config.json'));
-  currentConfig.token = token;
+  currentConfig.tokens.push({ nome, token });
   fs.writeFileSync('config.json', JSON.stringify(currentConfig, null, 4));
 }
 
 async function pedirToken() {
   while (true) {
-    const token = readlineSync.question('> ');
+	const token = readlineSync.question('Token: ');
+    const nome = readlineSync.question('Nome para representar a token: ');
+
     if (await validarToken(token)) {
-      escreverToken(token);
+      escreverToken(nome, token);
       break;
     } else {
       console.clear();
-      console.log("Token inválida, insira outra.");
+      console.log(`${erro}[X]${reset} Token inválida, insira outra.\n`);
     }
   }
 }
@@ -171,14 +175,18 @@ async function validarToken(token) {
   return !!u.username;
 }
 
-async function verificarToken() {
-  criarConfig();
-  const config = JSON.parse(fs.readFileSync('config.json'));
-  if (!config.token || !(await validarToken(config.token))) {
-    console.clear();
-    console.log("Você não inseriu uma token válida, insira.");
-    await pedirToken();
-  }
+async function exibirBarraDeProgresso(contador, total, tituloTexto = 'Progresso', textoProgress, textoComp = '', client) {
+  textoComp = !!textoComp;
+  
+  const porcentagem = ((contador) / total) * 100;
+  const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
+
+  process.title = `${tituloTexto} | ${contador}/${total} ${textoProgress}`;
+
+  console.clear();
+  await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
+  if (textoComp) console.log(textoComp);
+  console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${total} ${textoProgress}`);
 }
 
 async function clearUnica() {
@@ -221,18 +229,12 @@ async function clearUnica() {
     await sleep(parseFloat(config.delay) || 1);
     await msg.delete().then(async () => {
       contador++;
-      process.title = `147Clear | Limpar com DM única | ${contador}/${msgs.length} mensagens apagadas`;
-      const porcentagem = ((contador) / msgs.length) * 100;
-      const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
+      await exibirBarraDeProgresso(contador, msgs.length, '147Clear | Limpar com DM única', 'mensagens removidas', client);
 
       await updatePresence({
-        state: `${Math.round(porcentagem)}%`,
+        state: `${Math.round((contador / msgs.length) * 100)}%`,
         details: `Apagando mensagens: ${contador}/${msgs.length}`
       });
-
-      console.clear();
-      await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
-      console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${msgs.length} mensagens apagadas`);
     }).catch(() => { });
   }
 
@@ -261,7 +263,6 @@ async function clearAbertas() {
 
   for (const dm of dms) {
     contador++;
-    process.title = `147Clear | Limpar com DMs abertas | ${contador}/${dms.length} DMs limpas`;
     let contador_msgs = 0;
     const msgs = await fetchMsgs(dm.id);
 
@@ -270,23 +271,18 @@ async function clearAbertas() {
       await sleep(parseFloat(config.delay) || 1);
       await msg.delete().then(async () => {
         contador_msgs++;
+        await exibirBarraDeProgresso(contador_msgs, msgs.length, "147Clear | Limpar com DMs abertas", "mensagens removidas", `        ${cor}Apagando com${reset} ${dm.recipient.globalName || dm.recipient.username}\n`, client);
 
-        const porcentagem = ((contador_msgs) / msgs.length) * 100;
-        const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
         await updatePresence({
-          state: `Na dm com ${dm.recipient.globalName || dm.recipient.username}`,
-          details: `Apagando ${contador_msgs}/${msgs.length} [${Math.round(porcentagem)}%]`,
+          state: `Na DM com ${dm.recipient.globalName || dm.recipient.username}`,
+          details: `Apagando ${contador_msgs}/${msgs.length} [${Math.round((contador_msgs / msgs.length) * 100)}%]`,
           largeImageText: `${contador}/${dms.length} DMs limpas`
         });
-
-        console.clear();
-        await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
-        console.log(`        ${cor}Apagando DM com:${reset} ${dm.recipient.globalName || dm.recipient.username}\n`)
-        console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador_msgs}/${msgs.length} mensagens apagadas | ${contador}/${dms.length} DMs limpas`);
       }).catch(() => { })
     }
     if (fechar) await dm.delete().catch(() => { });
   }
+
   setTimeout(async () => {
     menu(client);
   }, 1000);
@@ -311,20 +307,17 @@ async function removerAmigos() {
     const user = await client.users.fetch(amigo).catch(() => { });
     await client.relationships.deleteRelationship(user).then(async () => {
       contador++;
-      process.title = `147Clear | Remover amigos | ${contador}/${amigos.length} amigos removidos`;
-      const porcentagem = ((contador) / amigos.length) * 100;
-      const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
+      await exibirBarraDeProgresso(contador, amigos.length, '147Clear | Remover amigos', 'amigos removidos', '', client);
 
-      console.clear();
       await updatePresence({
-        details: `Removendo amigos ${contador}/${amigos.length} [${Math.round(porcentagem)}%]`,
+        details: `Removendo amigos ${contador}/${amigos.length} [${Math.round((contador / amigos.length) * 100)}%]`,
       });
-      await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
-      console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${amigos.length} amigos removidos`);
     }).catch(() => { });
   }
 
-  menu(client);
+  setTimeout(() => {
+    menu(client);
+  }, 1000);
 }
 
 async function removerServidores() {
@@ -345,19 +338,17 @@ async function removerServidores() {
     await sleep(parseFloat(config.delay) || 1);
     await server.leave().then(async () => {
       contador++;
-      process.title = `147Clear | Remover servidores | ${contador}/${servers.length} servidores removidos`;
-      const porcentagem = ((contador) / servers.length) * 100;
-      const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
+      await exibirBarraDeProgresso(contador, servers.length, '147Clear | Remover servidores', "servidores removidos", '', client);
+
       await updatePresence({
-        details: `Removendo servidores ${contador}/${servers.length} [${Math.round(porcentagem)}%]`,
+        details: `Removendo servidores ${contador}/${servers.length} [${Math.round((contador / servers.length) * 100)}%]`,
       });
-      console.clear();
-      await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
-      console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${servers.length} servidores removidos`);
     }).catch(() => { });
   }
 
-  menu(client);
+  setTimeout(() => {
+    menu(client);
+  }, 1000);
 }
 
 async function fecharDMs() {
@@ -378,19 +369,17 @@ async function fecharDMs() {
     await sleep(1.3);
     await dm.delete().then(async () => {
       contador++;
-      process.title = `147Clear | Fechar DMs | ${contador}/${dms.length} DMs fechadas`;
-      const porcentagem = ((contador) / dms.length) * 100;
-      const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
+      await exibirBarraDeProgresso(contador, dms.length, '147Clear | Fechar DMs', "DMs fechadas", '', client);
+
       await updatePresence({
-        details: `Fechando DMs ${contador}/${dms.length} [${Math.round(porcentagem)}%]`,
+        details: `Fechando DMs ${contador}/${dms.length} [${Math.round((contador / dms.length) * 100)}%]`,
       });
-      console.clear();
-      await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
-      console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${dms.length} DMs fechadas`);
     }).catch(() => { });
   }
 
-  menu(client);
+  setTimeout(() => {
+    menu(client);
+  }, 1000);
 }
 
 async function configurar() {
@@ -468,8 +457,6 @@ async function kosameFarm() {
 }
 
 async function processarCanais(zipEntries, whitelist) {
-  criarConfig();
-
   let totalDMs = await contarDMs(zipEntries);
   let contador = 0;
 
@@ -489,17 +476,14 @@ async function processarCanais(zipEntries, whitelist) {
       if (dmChannel) {
         await cleanMessagesFromDM(dmChannel, totalDMs);
         contador++;
-        process.title = `147Clear | Apagar package | ${contador}/${totalDMs} DMs limpas`
-        const porcentagem = ((contador) / totalDMs) * 100;
-        const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
-        console.clear();
+
+        await exibirBarraDeProgresso(contador, totalDMs, '147Clear | Apagar package', "DMs limpas", `        ${cor}Apagando com${reset} ${dmChannel.recipient.globalName || dmChannel.recipient.username}\n`, client);
+
         await updatePresence({
           details: `Usando CL all`,
-          state: `Apagando ${contador}/${totalDMs} DMs [${Math.round(porcentagem)}%]`,
+          state: `Apagando ${contador}/${totalDMs} DMs [${Math.round((contador / totalDMs) * 100)}%]`,
           largeImageText: `Na dm com ${dmChannel.recipient.globalName || dmChannel.recipient.username}`
         });
-        await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
-        console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${totalDMs} DMs limpas`);
       }
     }
   }
@@ -638,7 +622,7 @@ async function userInfo() {
   }
 
   console.log(`
-    ${reset}├─>${cor} Usuário:${reset} ${client.user.globalName ? `${reset} ${client.user.username} (\`${client.user.globalName}\`) > ${cor}${client.user.id}` : `${client.user.username} | ${cor}${client.user.id}`}
+    ${reset}├─>${cor} Usuário:${reset}${client.user.globalName ? `${reset} ${client.user.username} (\`${client.user.globalName}\`) > ${cor}${client.user.id}` : `${client.user.username} | ${cor}${client.user.id}`}
     ${reset}├─>${cor} DMs abertas:${reset} ${dmsAbertas.length}
     ${nivelImpulsionamento.dataImpulsionamento ? `${reset}└─>${cor} Boost:
     ${reset}  ├─> ${cor} Data início: ${reset} ${nivelImpulsionamento.dataImpulsionamento}
@@ -760,7 +744,7 @@ async function abrirDMsComAmigos() {
     console.clear();
     console.log(`${erro}[X]${reset} Você não tem amigos :(`);
     await sleep(5);
-    await abrirDMs();
+    menu(client);
     return;
   }
 
@@ -769,19 +753,17 @@ async function abrirDMsComAmigos() {
     await sleep(1.7);
     await amigokk.createDM().then(async () => {
       contador++;
-      process.title = `147Clear | Abrir DMs | ${contador}/${amigos.length} DMs abertas`;
-      const porcentagem = ((contador) / amigos.length) * 100;
-      const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']'; 
-      console.clear();
+      await exibirBarraDeProgresso(contador, amigos.length, '147Clear | Abrir DMs', "DMs abertas", '', client);
+
       await updatePresence({
-        details: `Abrindo dms com amigos ${contador}/${amigos.length} [${Math.round(porcentagem)}%]`,
+        details: `Abrindo DMs com amigos ${contador}/${amigos.length} [${Math.round((contador / amigos.length) * 100)}%]`,
       });
-      await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
-      console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${amigos.length} DMs abertas`);
     }).catch(() => {});
   }
 
-  menu(client);
+  setTimeout(() => {
+    menu(client);
+  }, 1000);
 }
 
 async function abrirTodasAsDMs() {
@@ -823,20 +805,18 @@ async function abrirTodasAsDMs() {
       await sleep(parseFloat(config.delay) || 1);
       await user?.createDM().then(async () => {
         contador++;
-        process.title = `147Clear | Abrir DMs | ${contador}/${totalDMs} DMs abertas`;
-        const porcentagem = ((contador) / totalDMs) * 100;
-        const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
-        console.clear();
+        await exibirBarraDeProgresso(contador, totalDMs, '147Clear | Abrir DMs', "DMs abertas", '', client);
+
         await updatePresence({
-          details: `Abrindo todas as DMs ${contador}/${amigos.length} [${Math.round(porcentagem)}%]`,
+          details: `Abrindo todas as DMs ${contador}/${totalDMs} [${Math.round((contador / totalDMs) * 100)}%]`,
         });
-        await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
-        console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${totalDMs} DMs abertas`);
       }).catch(() => {});
     }
   }
 
-  menu(client);
+  setTimeout(() => {
+    menu(client);
+  }, 1000);
 }
 
 async function selecionarArquivoZip() {
@@ -884,6 +864,8 @@ async function utilidadesCall() {
     
     ${cor}[ 1 ]${reset} Desconectar
     ${cor}[ 2 ]${reset} Mover
+	
+    ${cor}[ 3 ]${reset} Voltar
   `);
   const move_ou_disconnect = readlineSync.question('> ');
   console.clear();
@@ -1024,6 +1006,9 @@ async function utilidadesCall() {
 
       await menu(client);
       break;
+	case '3':
+	  await menu(client);
+	  break;
     default:
       console.clear();
       console.log(`${erro}[X] ${reset}Opção inválida, tente novamente.`);
@@ -1117,17 +1102,50 @@ async function checarUpdates() {
 }
 
 async function iniciarCliente() {
+  criarConfig();
+  console.clear();
+  
   try {
     const config = JSON.parse(fs.readFileSync('config.json'));
-    await client.login(config.token);
-    menu(client);
-  } catch {
+    const tokensValidos = [];
+
+    for (const { nome, token } of config.tokens) {
+      if (await validarToken(token)) {
+        tokensValidos.push({ nome, token });
+      }
+    }
+
+    if (!tokensValidos.length) {
+      console.log(`${erro}[X]${reset} Nenhuma token válida encontrada na config.\n`);
+      await pedirToken();
+      await iniciarCliente();
+      return;
+    }
+
+    process.title = "147Clear | Selecionar token"
+    console.clear();
+	console.log(`  Escolha uma token para logar.\n`)
+	
+    tokensValidos.forEach((t, index) => {
+      console.log(`  ${cor}[ ${index + 1} ]${reset} ${t.nome}`);
+    });
+
+    const opcao = readlineSync.question('\n> ');
+    const tokenEscolhido = tokensValidos[parseInt(opcao) - 1];
+
+    if (tokenEscolhido) {
+      await client.login(tokenEscolhido.token);
+      menu(client);
+    } else {
+      console.log("Opção inválida.");
+      await iniciarCliente();
+    }
+  } catch (error) {
+	console.log(error);
     console.log("Falha ao fazer login, verifique seu token.");
     await pedirToken();
     await iniciarCliente();
   }
 }
 
-verificarToken().then(() => {
-  iniciarCliente();
-});
+iniciarCliente();
