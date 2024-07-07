@@ -5,7 +5,7 @@ const fetch = require('node-fetch');
 const client = new Discord.Client({ checkUpdate: false });
 const moment = require('moment');
 const path = require('path');
-const VERSAO_ATUAL = "1.0.6";
+const VERSAO_ATUAL = "1.0.7";
 
 const config = (() => {
   if (!fs.existsSync('./config.json')) {
