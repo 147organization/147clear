@@ -151,11 +151,19 @@ function escreverToken(nome, token) {
 }
 
 async function pedirToken() {
+  process.title = '147Clear | Adicionar token'
   while (true) {
     const token = readlineSync.question('Token: ');
     const nome = readlineSync.question('Nome para representar a token: ');
 
     if (await validarToken(token)) {
+	  const tokenExistente = config.tokens.find(t => t.token === token);
+      if (tokenExistente) {
+		console.clear();
+        console.log(`${erro}[X]${reset} Essa token já está na config.`);
+		await sleep(5);
+        return;
+      }
       escreverToken(nome, token);
       break;
     } else {
@@ -1106,14 +1114,17 @@ async function iniciarCliente() {
   console.clear();
   
   try {
-    const config = JSON.parse(fs.readFileSync('config.json'));
+    let config = JSON.parse(fs.readFileSync('config.json'));
+    
     const tokensValidos = [];
-
     for (const { nome, token } of config.tokens) {
       if (await validarToken(token)) {
         tokensValidos.push({ nome, token });
       }
     }
+    
+    config.tokens = tokensValidos;
+    fs.writeFileSync('config.json', JSON.stringify(config, null, 4));
 
     if (!tokensValidos.length) {
       console.log(`${erro}[X]${reset} Nenhuma token válida encontrada na config.\n`);
@@ -1130,7 +1141,17 @@ async function iniciarCliente() {
       console.log(`  ${cor}[ ${index + 1} ]${reset} ${t.nome}`);
     });
 
+    console.log(`\n  ${cor}[ ${tokensValidos.length + 1} ]${reset} Adicionar nova token`);
+
     const opcao = readlineSync.question('\n> ');
+    
+    if (parseInt(opcao) === tokensValidos.length + 1) {
+	  console.clear();
+      await pedirToken();
+      await iniciarCliente();
+      return;
+    }
+
     const tokenEscolhido = tokensValidos[parseInt(opcao) - 1];
 
     if (tokenEscolhido) {
