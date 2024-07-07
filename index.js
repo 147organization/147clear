@@ -155,13 +155,21 @@ async function pedirToken() {
   while (true) {
     const token = readlineSync.question('Token: ');
     const nome = readlineSync.question('Nome para representar a token: ');
+	
+    const nomeExistente = config.tokens.find(t => t.nome === nome);
+    if (nomeExistente) {
+      console.clear();
+      console.log(`${erro}[X]${reset} Já existe uma token com esse nome. Insira um nome novo.\n`);
+      await sleep(5);
+      return;
+    }
 
     if (await validarToken(token)) {
-	  const tokenExistente = config.tokens.find(t => t.token === token);
+      const tokenExistente = config.tokens.find(t => t.token === token);
       if (tokenExistente) {
-		console.clear();
+        console.clear();
         console.log(`${erro}[X]${reset} Essa token já está na config.`);
-		await sleep(5);
+	await sleep(5);
         return;
       }
       escreverToken(nome, token);
@@ -1142,7 +1150,7 @@ async function iniciarCliente() {
     });
 
     console.log(`\n  ${cor}[ ${tokensValidos.length + 1} ]${reset} Adicionar nova token`);
-
+    console.log(`  ${cor}[ ${tokensValidos.length + 2} ]${reset} Remover uma token`);
     const opcao = readlineSync.question('\n> ');
     
     if (parseInt(opcao) === tokensValidos.length + 1) {
@@ -1150,6 +1158,30 @@ async function iniciarCliente() {
       await pedirToken();
       await iniciarCliente();
       return;
+    }
+	
+    if (parseInt(opcao) === tokensValidos.length + 2) {
+      console.clear();
+      console.log(`  Escolha uma token para remover.\n`)
+      tokensValidos.forEach((t, index) => {
+        console.log(`  ${cor}[ ${index + 1} ]${reset} ${t.nome}`);
+      });
+      const nomeTokenRemover = readlineSync.question('\n> ');
+      
+      const tokenRemover = tokensValidos.find(t => t.nome === nomeTokenRemover);
+      if (tokenRemover) {
+        config.tokens = config.tokens.filter(t => t.token !== tokenRemover.token);
+        fs.writeFileSync('config.json', JSON.stringify(config, null, 4));
+        console.log(`Token "${tokenRemover.nome}" removida com sucesso.\n`);
+        await iniciarCliente();
+        return;
+      } else {
+	console.clear();
+        console.log(`${erro}[X]${reset} Token "${nomeTokenRemover}" não encontrada.`);
+	await sleep(5);
+        await iniciarCliente();
+        return;
+      }
     }
 
     const tokenEscolhido = tokensValidos[parseInt(opcao) - 1];
