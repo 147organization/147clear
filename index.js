@@ -61,9 +61,7 @@ async function updatePresence(presence, tempo = false) {
       smallImageText: presence.smallImageText || theme.smallImageText,
     };
     await rpc.setActivity(activity);
-  } catch (error) {
-    console.error('Erro ao atualizar a presença:', error);
-  }
+  } catch {}
 }
 
 function hex(hex) {
