@@ -1162,23 +1162,23 @@ async function iniciarCliente() {
 	
     if (parseInt(opcao) === tokensValidos.length + 2) {
       console.clear();
-      console.log(`  Escolha uma token para remover.\n`)
+      console.log(`  Escolha uma token para remover.\n`);
       tokensValidos.forEach((t, index) => {
         console.log(`  ${cor}[ ${index + 1} ]${reset} ${t.nome}`);
       });
-      const nomeTokenRemover = readlineSync.question('\n> ');
-      
-      const tokenRemover = tokensValidos.find(t => t.nome === nomeTokenRemover);
-      if (tokenRemover) {
+      const indiceTokenRemover = parseInt(readlineSync.question('\n> ')) - 1;
+     
+      if (indiceTokenRemover >= 0 && indiceTokenRemover < tokensValidos.length) {
+        const tokenRemover = tokensValidos[indiceTokenRemover];
         config.tokens = config.tokens.filter(t => t.token !== tokenRemover.token);
         fs.writeFileSync('config.json', JSON.stringify(config, null, 4));
         console.log(`Token "${tokenRemover.nome}" removida com sucesso.\n`);
         await iniciarCliente();
         return;
       } else {
-	console.clear();
-        console.log(`${erro}[X]${reset} Token "${nomeTokenRemover}" não encontrada.`);
-	await sleep(5);
+        console.clear();
+        console.log(`${erro}[X]${reset} Opção inválida.`);
+        await sleep(5);
         await iniciarCliente();
         return;
       }
