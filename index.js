@@ -153,7 +153,7 @@ function escreverToken(nome, token) {
 async function pedirToken() {
   process.title = '147Clear | Adicionar token'
   while (true) {
-    const token = readlineSync.question('Token: ');
+    const token = readlineSync.question('Token: ').replace(/"/g, '').trim();
     const nome = readlineSync.question('Nome para representar a token: ');
 	
     const nomeExistente = config.tokens.find(t => t.nome === nome);
