@@ -5,7 +5,7 @@ const fetch = require('node-fetch');
 const client = new Discord.Client({ checkUpdate: false });
 const moment = require('moment');
 const path = require('path');
-const VERSAO_ATUAL = "1.0.7";
+const VERSAO_ATUAL = "1.0.8";
 
 const config = (() => {
   if (!fs.existsSync('./config.json')) {
@@ -89,6 +89,7 @@ async function fetchMsgs(canal) {
 
   let ultimoid;
   let messages = [];
+  let totalMessages = 0;
 
   while (true) {
     const fetched = await canall.messages.fetch({
@@ -100,10 +101,16 @@ async function fetchMsgs(canal) {
       return messages.filter(msg => msg.author.id === client.user.id && !msg.system);
     }
 
+    totalMessages += fetched.size;
+    console.clear()
+    await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
+    console.log(`${reset}- [${cor}!${reset}] ${cor}Dando fetch nas mensagens com ${reset}${canall.recipient.globalName || canall.recipient.username}.\n- [${cor}@${reset}] ${cor}Encontradas ${reset}${totalMessages} mensagens ${cor}totais até agora.`);
+
     messages = messages.concat(Array.from(fetched.values()));
     ultimoid = fetched.lastKey();
   }
 }
+
 
 async function titulo(username, userId) {
   console.log(`
@@ -192,7 +199,6 @@ async function validarToken(token) {
 }
 
 async function exibirBarraDeProgresso(contador, total, tituloTexto = 'Progresso', textoProgress, textoComp = '', client) {
-  textoComp = !!textoComp;
   
   const porcentagem = ((contador) / total) * 100;
   const progresso = '[' + '█'.repeat(Math.floor(porcentagem / 2)) + '░'.repeat(50 - Math.floor(porcentagem / 2)) + ']';
@@ -201,8 +207,8 @@ async function exibirBarraDeProgresso(contador, total, tituloTexto = 'Progresso'
 
   console.clear();
   await titulo(client?.user?.username || 'a', client?.user?.id || 'ww');
-  if (textoComp) console.log(textoComp);
-  console.log(`${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${total} ${textoProgress}`);
+
+  console.log(`${textoComp ? `${textoComp}` : ''}${cor}${progresso}${reset} | ${porcentagem.toFixed(2)}% | ${contador}/${total} ${textoProgress}`);
 }
 
 async function clearUnica() {
@@ -211,7 +217,7 @@ async function clearUnica() {
   process.title = '147Clear | Limpar com DM única';
   console.log("Insira o ID do usuário.");
   let id = readlineSync.question('> ');
-
+  let nome;
   const canal = client.channels.cache.get(id);
   let contador = 0;
 
@@ -223,7 +229,7 @@ async function clearUnica() {
       await sleep(3.5);
       await clearUnica();
     }
-
+    nome = `${user?.globalName || user?.username}`;
     await user?.createDM().then(c => id = c.id).catch(async () => {
       console.clear();
       console.log(`${erro}[X]${reset} Não foi possível abrir DM com o usuário.`);
@@ -233,19 +239,20 @@ async function clearUnica() {
   }
 
   const msgs = await fetchMsgs(id);
-
+  if(canal) nome = canal.recipient.globalName || canal.recipient.username
   if (!msgs.length) {
     console.clear();
     console.log(`${erro}[X]${reset} Você não tem mensagens ai.`);
     await sleep(3.5);
     menu(client);
   }
+   
 
   for (const [index, msg] of msgs.entries()) {
     await sleep(parseFloat(config.delay) || 1);
     await msg.delete().then(async () => {
       contador++;
-      await exibirBarraDeProgresso(contador, msgs.length, '147Clear | Limpar com DM única', 'mensagens removidas', client);
+      await exibirBarraDeProgresso(contador, msgs.length, '147Clear | Limpar com DM única', 'mensagens removidas', `        ${cor}Apagando com${reset} ${nome}\n`, client);
 
       await updatePresence({
         state: `${Math.round((contador / msgs.length) * 100)}%`,
@@ -258,6 +265,7 @@ async function clearUnica() {
     menu(client);
   }, 1000);
 }
+
 
 async function clearAbertas() {
   console.clear();
