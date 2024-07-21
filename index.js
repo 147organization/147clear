@@ -137,7 +137,7 @@ async function fetchMsgs(canal) {
 		console.clear();
 		await titulo(client?.user?.username || "a", client?.user?.id || "ww");
 		console.log(
-			`${reset}- [${cor}!${reset}] ${cor}Dando fetch nas mensagens com ${reset}${canall.recipient.globalName || canall.recipient.username}.\n- [${cor}@${reset}] ${cor}Encontradas ${reset}${totalMessages} mensagens ${cor}totais até agora.`,
+			`${reset}- [${cor}!${reset}] ${cor}Dando fetch nas mensagens com ${reset}${canall?.recipient?.globalName || canall?.recipient?.username || canall?.name}.\n- [${cor}@${reset}] ${cor}Encontradas ${reset}${totalMessages} mensagens ${cor}totais até agora.`,
 		);
 
 		messages = messages.concat(Array.from(fetched.values()));
