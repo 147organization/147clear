@@ -1,38 +1,30 @@
 {
-  "name": "clkk",
-  "version": "1.0.8",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "adm-zip": "^0.5.12",
-    "discord-rpc": "^4.0.1",
-    "discord.js-selfbot-v13": "^3.1.4",
-    "moment": "^2.30.1",
-    "readline-sync": "^1.4.10"
-  },
-  "devDependencies": {
-    "pkg": "^5.3.1"
-  },
-  "bin": "index.js",
-  "pkg": {
-    "scripts": [
-      "index.js",
-      "node_modules/discord.js-selfbot-v13/**/*.js"
-    ],
-    "assets": [
-      "config.json"
-    ],
-    "targets": [
-      "node16-linux-x64",
-      "node16-win-x64",
-      "node16-macos-x64"
-    ],
-    "outputPath": "output"
-  }
+	"name": "147clear",
+	"version": "1.0.8",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"description": "",
+	"dependencies": {
+		"adm-zip": "^0.5.12",
+		"discord-rpc": "^4.0.1",
+		"discord.js-selfbot-v13": "^3.1.4",
+		"moment": "^2.30.1",
+		"readline-sync": "^1.4.10"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "1.8.3",
+		"pkg": "^5.3.1"
+	},
+	"bin": "index.js",
+	"pkg": {
+		"scripts": ["index.js", "node_modules/discord.js-selfbot-v13/**/*.js"],
+		"assets": ["config.json"],
+		"targets": ["node16-linux-x64", "node16-win-x64", "node16-macos-x64"],
+		"outputPath": "output"
+	}
 }
