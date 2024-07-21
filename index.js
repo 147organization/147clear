@@ -1333,7 +1333,7 @@ async function menu(client) {
 			await selectedOption.action();
 		} else {
 			console.log(`${erro}[X] ${reset}Opção inválida, tente novamente.`);
-			await new Promise((resolve) => setTimeout(resolve, 1500));
+			await sleep(2.5);
 		}
 	}
 }
