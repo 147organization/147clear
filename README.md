@@ -89,7 +89,7 @@ Para contribuir com o projeto, siga estes passos:
 
 ## Contato
 
-Para mais informações ou suporte, entre em nosso [servidor](https://discord.gg/FZqQUkvBxB) de suporte ou nos contate através do email: [147company@gmail.com](mailto:147company@gmail.com).
+Para mais informações ou suporte, nos contate através do email: [147company@gmail.com](mailto:147company@gmail.com).
 
 ## Checklist de Futuras Adições
 
