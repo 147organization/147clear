@@ -7,7 +7,7 @@ const moment = require("moment");
 const path = require("path");
 
 const clientId = "1257500388408692800";
-const VERSAO_ATUAL = "1.0.9";
+const VERSAO_ATUAL = "1.1.0";
 
 const config = (() => {
 	if (!fs.existsSync("./config.json")) {
