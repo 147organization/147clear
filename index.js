@@ -53,8 +53,7 @@ const erro = hex("#ff0000");
 const reset = hex("#ffffff");
 const aviso = "\u001b[43";
 
-const sleep = (seconds) =>
-	new Promise((resolve) => setTimeout(resolve, seconds * 1000));
+const sleep = (seconds) => new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 const rpc = new RPC.Client({ transport: "ipc" });
 moment.locale("pt-BR");
 
@@ -64,8 +63,8 @@ try {
 		updatePresence(theme);
 	});
 
-	rpc.login({ clientId }).catch(() => {});
-} catch {}
+	rpc.login({ clientId }).catch(() => { });
+} catch { }
 
 async function updatePresence(presence, tempo = false) {
 	if (!rpc) return;
@@ -81,7 +80,7 @@ async function updatePresence(presence, tempo = false) {
 			smallImageText: presence.smallImageText || theme.smallImageText,
 		};
 		await rpc.setActivity(activity);
-	} catch {}
+	} catch { }
 }
 
 function hex(hex) {
@@ -269,7 +268,7 @@ async function clearUnica() {
 	let contador = 0;
 
 	if (!canal) {
-		const user = await client.users.fetch(id).catch(() => {});
+		const user = await client.users.fetch(id).catch(() => { });
 		if (!user) {
 			console.clear();
 			console.log(`${erro}[X]${reset} Este ID é inválido.`);
@@ -319,7 +318,7 @@ async function clearUnica() {
 					details: `Apagando mensagens: ${contador}/${msgs.length}`,
 				});
 			})
-			.catch(() => {});
+			.catch(() => { });
 	}
 
 	setTimeout(async () => {
@@ -370,14 +369,14 @@ async function clearAbertas() {
 					);
 
 					await updatePresence({
-						state: `Na DM com ${dm.recipient.globalName || dm.recipient.username}`,
+						state: `${contador_msgs}/${msgs.length}`,
 						details: `Apagando ${contador_msgs}/${msgs.length} [${Math.round((contador_msgs / msgs.length) * 100)}%]`,
 						largeImageText: `${contador}/${dms.length} DMs limpas`,
 					});
 				})
-				.catch(() => {});
+				.catch((e) => { });
 		}
-		if (fechar) await dm.delete().catch(() => {});
+		if (fechar) await dm.delete().catch(() => { });
 	}
 
 	setTimeout(async () => {
@@ -403,7 +402,7 @@ async function removerAmigos() {
 
 	for (const amigo of amigos) {
 		await sleep(Number.parseFloat(config.delay) || 1);
-		const user = await client.users.fetch(amigo).catch(() => {});
+		const user = await client.users.fetch(amigo).catch(() => { });
 		await client.relationships
 			.deleteRelationship(user)
 			.then(async () => {
@@ -421,7 +420,7 @@ async function removerAmigos() {
 					details: `Removendo amigos ${contador}/${amigos.length} [${Math.round((contador / amigos.length) * 100)}%]`,
 				});
 			})
-			.catch(() => {});
+			.catch(() => { });
 	}
 
 	setTimeout(() => {
@@ -462,7 +461,7 @@ async function removerServidores() {
 					details: `Removendo servidores ${contador}/${servers.length} [${Math.round((contador / servers.length) * 100)}%]`,
 				});
 			})
-			.catch(() => {});
+			.catch(() => { });
 	}
 
 	setTimeout(() => {
@@ -505,7 +504,7 @@ async function fecharDMs() {
 					details: `Fechando DMs ${contador}/${dms.length} [${Math.round((contador / dms.length) * 100)}%]`,
 				});
 			})
-			.catch(() => {});
+			.catch(() => { });
 	}
 
 	setTimeout(() => {
@@ -605,9 +604,9 @@ async function processarCanais(zipEntries, whitelist) {
 			const user = await fetchUser(recipientId);
 			await sleep(Number.parseFloat(config.delay) || 1);
 
-			const dmChannel = await user?.createDM().catch(() => {});
+			const dmChannel = await user?.createDM().catch(() => { });
 			if (dmChannel) {
-				await cleanMessagesFromDM(dmChannel, totalDMs);
+				await cleanMessagesFromDM(dmChannel, totalDMs, client);
 				contador++;
 
 				await exibirBarraDeProgresso(
@@ -645,7 +644,7 @@ function ehDMGrupo(data) {
 	return (
 		data?.recipients &&
 		Array.isArray(data.recipients) &&
-		data.type === 1 &&
+		data.type === 'DM' &&
 		data.recipients.length > 1
 	);
 }
@@ -672,23 +671,37 @@ async function fetchUser(userId) {
 	}
 }
 
-async function cleanMessagesFromDM(dmChannel, totalDMs) {
+async function cleanMessagesFromDM(dmChannel, totalDMs, client) {
 	const messages = await fetchMsgs(dmChannel.id);
+	let deletedCount = 0;
 
 	for (const msg of messages) {
 		await sleep(Number.parseFloat(config.delay) || 1);
 
-		try {
-			await msg.delete();
-		} catch (e) {
-			if (e.message.includes("Could not find the channel")) {
-				break;
-			}
-		}
+		await msg.delete()
+			.then(async () => {
+				deletedCount++;
+
+				await exibirBarraDeProgresso(
+					deletedCount,
+					messages.length,
+					"147Clear | Limpar com Trigger",
+					"mensagens removidas",
+					`        ${cor}Apagando mensagens no canal ${reset}${dmChannel.name || dmChannel.recipient.username} \n`,
+					client
+				);
+			})
+			.catch(e => {
+				if (e.message.includes("Could not find the channel")) {
+					return;
+				}
+			});
 	}
 
-	await dmChannel.delete().catch(() => {});
+
+	await dmChannel.delete().catch(() => { });
 }
+
 
 async function userInfo() {
 	console.clear();
@@ -771,12 +784,11 @@ async function userInfo() {
 	console.log(`
     ${reset}├─>${cor} Usuário:${reset}${client.user.globalName ? `${reset} ${client.user.username} (\`${client.user.globalName}\`) > ${cor}${client.user.id}` : `${client.user.username} | ${cor}${client.user.id}`}
     ${reset}├─>${cor} DMs abertas:${reset} ${dmsAbertas.length}
-    ${
-			nivelImpulsionamento.dataImpulsionamento
-				? `${reset}└─>${cor} Boost:
+    ${nivelImpulsionamento.dataImpulsionamento
+			? `${reset}└─>${cor} Boost:
     ${reset}  ├─> ${cor} Data início: ${reset} ${nivelImpulsionamento.dataImpulsionamento}
     ${reset}  └─> ${cor} Data próxima: ${reset} ${nivelImpulsionamento.dataProxima}`
-				: ``
+			: ``
 		}
   `);
 	readlineSync.question(
@@ -914,7 +926,7 @@ async function abrirDMsComAmigos() {
 	}
 
 	for (const amigo of amigos) {
-		const amigokk = await client.users.fetch(amigo).catch(() => {});
+		const amigokk = await client.users.fetch(amigo).catch(() => { });
 		await sleep(1.7);
 		await amigokk
 			.createDM()
@@ -933,7 +945,7 @@ async function abrirDMsComAmigos() {
 					details: `Abrindo DMs com amigos ${contador}/${amigos.length} [${Math.round((contador / amigos.length) * 100)}%]`,
 				});
 			})
-			.catch(() => {});
+			.catch(() => { });
 	}
 
 	setTimeout(() => {
@@ -966,7 +978,7 @@ async function abrirTodasAsDMs() {
 
 	const buffer_zip = fs.readFileSync(path);
 	const zipEntries = new AdmZip(buffer_zip).getEntries();
-	const totalDMs = await contarDMs(zipEntries);
+	const totalDMs = await contarDMs(zipEntries) / 2;
 	let contador = 0;
 
 	for (const entry of zipEntries) {
@@ -995,7 +1007,7 @@ async function abrirTodasAsDMs() {
 						details: `Abrindo todas as DMs ${contador}/${totalDMs} [${Math.round((contador / totalDMs) * 100)}%]`,
 					});
 				})
-				.catch(() => {});
+				.catch(() => { });
 		}
 	}
 
@@ -1274,7 +1286,7 @@ async function triggerClear() {
 					client,
 				);
 			})
-			.catch(() => {});
+			.catch(() => { });
 	}
 
 	menu(client);
