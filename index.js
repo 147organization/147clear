@@ -7,7 +7,7 @@ const moment = require("moment");
 const path = require("path");
 
 const clientId = "1257500388408692800";
-const VERSAO_ATUAL = "1.1.1";
+const VERSAO_ATUAL = "1.1.2";
 
 const config = (() => {
 	if (!fs.existsSync("./config.json")) {
@@ -1545,17 +1545,19 @@ async function menu(client) {
 	process.title = `147Clear | Menu | v${VERSAO_ATUAL}`;
 
 	await updatePresence(theme);
-	if (await checarUpdates()) {
-		console.log(
-			`        ${cor}[!]${reset} Há uma atualização disponível, vá em https://github.com/147organization/147clear`,
-		);
-	}
 
 	while (true) {
 		console.clear();
 		await titulo(client?.user?.username || "a", client?.user?.id || "ww");
+		
+	        if (await checarUpdates()) {
+		  console.log(
+			`        ${cor}[!]${reset} Há uma atualização disponível, vá em https://github.com/147organization/147clear`,
+    	          );
+	        }
+		
 		console.log("\n" + formatMenuInColumns(menuOptions, 2) + "\n");
-
+		
 		const opcao = readlineSync.question("> ");
 		const selectedOption = menuOptions.find((option) => option.id === opcao);
 		if (selectedOption) {
