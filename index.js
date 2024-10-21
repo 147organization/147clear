@@ -266,7 +266,7 @@ async function clearUnica() {
 	console.log("Insira o ID do usuário.");
 	let id = readlineSync.question("> ");
 	let nome;
-	const canal = client.channels.cache.get(id);
+	let canal = client.channels.cache.get(id);
 	let contador = 0;
 
 	if (!canal) {
@@ -280,7 +280,7 @@ async function clearUnica() {
 		nome = user?.globalName || user?.username;
 		await user
 			?.createDM()
-			.then((c) => (id = c.id))
+			.then((c) => (id = c.id, canal = c))
 			.catch(async () => {
 				console.clear();
 				console.log(
