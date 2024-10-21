@@ -7,7 +7,7 @@ const moment = require("moment");
 const path = require("path");
 
 const clientId = "1257500388408692800";
-const VERSAO_ATUAL = "1.1.0";
+const VERSAO_ATUAL = "1.1.1";
 
 const config = (() => {
 	if (!fs.existsSync("./config.json")) {
@@ -50,6 +50,7 @@ const theme = {
 
 const cor = hex(config.cor_painel || "#A020F0");
 const erro = hex("#ff0000");
+const ativo = hex("#19e356");
 const reset = hex("#ffffff");
 const aviso = "\u001b[43";
 
@@ -161,6 +162,7 @@ function criarConfig() {
 		tokens: [],
 		cor_painel: "#A020F0",
 		delay: "1",
+		esperar_fetch: false,
 		kosame: {
 			ativado: false,
 			canal: "",
@@ -268,14 +270,14 @@ async function clearUnica() {
 	let contador = 0;
 
 	if (!canal) {
-		const user = await client.users.fetch(id).catch(() => { });
+		const user = await client.users.fetch(id).catch(() => {});
 		if (!user) {
 			console.clear();
 			console.log(`${erro}[X]${reset} Este ID é inválido.`);
 			await sleep(3.5);
 			await clearUnica();
 		}
-		nome = `${user?.globalName || user?.username}`;
+		nome = user?.globalName || user?.username;
 		await user
 			?.createDM()
 			.then((c) => (id = c.id))
@@ -287,38 +289,83 @@ async function clearUnica() {
 				await sleep(3.5);
 				await clearUnica();
 			});
+	} else {
+	  nome = canal.name;
 	}
 
-	const msgs = await fetchMsgs(id);
-	if (canal) nome = canal.recipient.globalName || canal.recipient.username;
-	if (!msgs.length) {
+	let totalFiltrados = 0;
+	if (config.esperar_fetch === false) {
+		let ultimoid;
+		while (true) {
+			const fetched = await canal.messages.fetch({
+				limit: 100,
+				...(ultimoid && { before: ultimoid }),
+			});
+
+			if (fetched.size === 0) break;
+
+			const msgsFiltradas = Array.from(fetched.values()).filter(
+				(msg) => msg.author.id === client.user.id && !msg.system
+			);
+
+			totalFiltrados += msgsFiltradas.length;
+
+			for (const [index, msg] of msgsFiltradas.entries()) {
+				await sleep(Number.parseFloat(config.delay) || 1);
+				await msg
+					.delete()
+					.then(async () => {
+						contador++;
+						await exibirBarraDeProgresso(
+							contador,
+							totalFiltrados,
+							"147Clear | Limpar com DM única",
+							"mensagens removidas",
+							`        ${cor}Apagando com${reset} ${nome}\n`,
+							client,
+						);
+
+						await updatePresence({
+							state: `${Math.round((contador / totalFiltrados) * 100)}%`,
+							details: `Apagando mensagens: ${contador}/${totalFiltrados}`,
+						});
+					})
+					.catch(() => {});
+			}
+			ultimoid = fetched.lastKey();
+		}
+	} else {
+		const msgs = await fetchMsgs(id);
+		totalFiltrados = msgs.length;
+		for (const [index, msg] of msgs.entries()) {
+			await sleep(Number.parseFloat(config.delay) || 1);
+			await msg
+				.delete()
+				.then(async () => {
+					contador++;
+					await exibirBarraDeProgresso(
+						contador,
+						totalFiltrados,
+						"147Clear | Limpar com DM única",
+						"mensagens removidas",
+						`        ${cor}Apagando com${reset} ${nome}\n`,
+						client,
+					);
+
+					await updatePresence({
+						state: `${Math.round((contador / totalFiltrados) * 100)}%`,
+						details: `Apagando mensagens: ${contador}/${totalFiltrados}`,
+					});
+				})
+				.catch(() => {});
+		}
+	}
+
+	if (!totalFiltrados) {
 		console.clear();
 		console.log(`${erro}[X]${reset} Você não tem mensagens ai.`);
 		await sleep(3.5);
 		menu(client);
-	}
-
-	for (const [index, msg] of msgs.entries()) {
-		await sleep(Number.parseFloat(config.delay) || 1);
-		await msg
-			.delete()
-			.then(async () => {
-				contador++;
-				await exibirBarraDeProgresso(
-					contador,
-					msgs.length,
-					"147Clear | Limpar com DM única",
-					"mensagens removidas",
-					`        ${cor}Apagando com${reset} ${nome}\n`,
-					client,
-				);
-
-				await updatePresence({
-					state: `${Math.round((contador / msgs.length) * 100)}%`,
-					details: `Apagando mensagens: ${contador}/${msgs.length}`,
-				});
-			})
-			.catch(() => { });
 	}
 
 	setTimeout(async () => {
@@ -339,7 +386,7 @@ async function clearAbertas() {
 		console.clear();
 		console.log(`${erro}[X]${reset} Você não tem DMs abertas.`);
 		await sleep(3.5);
-		menu(client);
+		return menu(client);
 	}
 
 	console.log("Fechar cada DM após apagar as mensagens? [s/sim]");
@@ -350,33 +397,90 @@ async function clearAbertas() {
 	for (const dm of dms) {
 		contador++;
 		let contador_msgs = 0;
-		const msgs = await fetchMsgs(dm.id);
+		let totalFiltrados = 0;
 
-		if (!msgs.length) continue;
-		for (const [index, msg] of msgs.entries()) {
-			await sleep(Number.parseFloat(config.delay) || 1);
-			await msg
-				.delete()
-				.then(async () => {
-					contador_msgs++;
-					await exibirBarraDeProgresso(
-						contador_msgs,
-						msgs.length,
-						"147Clear | Limpar com DMs abertas",
-						"mensagens removidas",
-						`        ${cor}Apagando com${reset} ${dm.recipient.globalName || dm.recipient.username}\n`,
-						client,
-					);
+		if (config.esperar_fetch === false) {
+			let ultimoid;
+			while (true) {
+				const fetched = await dm.messages.fetch({
+					limit: 100,
+					...(ultimoid && { before: ultimoid }),
+				});
 
-					await updatePresence({
-						state: `${contador_msgs}/${msgs.length}`,
-						details: `Apagando ${contador_msgs}/${msgs.length} [${Math.round((contador_msgs / msgs.length) * 100)}%]`,
-						largeImageText: `${contador}/${dms.length} DMs limpas`,
-					});
-				})
-				.catch((e) => { });
+				if (fetched.size === 0) break;
+
+				const msgsFiltradas = Array.from(fetched.values()).filter(
+					(msg) => msg.author.id === client.user.id && !msg.system
+				);
+
+				totalFiltrados += msgsFiltradas.length;
+
+				for (const [index, msg] of msgsFiltradas.entries()) {
+					await sleep(Number.parseFloat(config.delay) || 1);
+					await msg
+						.delete()
+						.then(async () => {
+							contador_msgs++;
+							await exibirBarraDeProgresso(
+								contador_msgs,
+								totalFiltrados,
+								"147Clear | Limpar com DMs abertas",
+								"mensagens removidas",
+								`        ${cor}Apagando com${reset} ${
+									dm.recipient.globalName || dm.recipient.username
+								}\n`,
+								client,
+							);
+
+							await updatePresence({
+								state: `${contador_msgs}/${totalFiltrados}`,
+								details: `Apagando ${contador_msgs}/${totalFiltrados} [${Math.round(
+									(contador_msgs / totalFiltrados) * 100,
+								)}%]`,
+								largeImageText: `${contador}/${dms.length} DMs limpas`,
+							});
+						})
+						.catch(() => {});
+				}
+
+				ultimoid = fetched.lastKey();
+			}
+		} else {
+			const msgs = await fetchMsgs(dm.id);
+			totalFiltrados = msgs.length;
+
+			if (!msgs.length) continue;
+
+			for (const [index, msg] of msgs.entries()) {
+				await sleep(Number.parseFloat(config.delay) || 1);
+				await msg
+					.delete()
+					.then(async () => {
+						contador_msgs++;
+						await exibirBarraDeProgresso(
+							contador_msgs,
+							totalFiltrados,
+							"147Clear | Limpar com DMs abertas",
+							"mensagens removidas",
+							`        ${cor}Apagando com${reset} ${
+								dm.recipient.globalName || dm.recipient.username
+							}\n`,
+							client,
+						);
+
+						await updatePresence({
+							state: `${contador_msgs}/${totalFiltrados}`,
+							details: `Apagando ${contador_msgs}/${totalFiltrados} [${Math.round(
+								(contador_msgs / totalFiltrados) * 100,
+							)}%]`,
+							largeImageText: `${contador}/${dms.length} DMs limpas`,
+						});
+					})
+					.catch(() => {});
+			}
 		}
-		if (fechar) await dm.delete().catch(() => { });
+
+		if (fechar) await dm.delete().catch(() => {});
 	}
 
 	setTimeout(async () => {
@@ -521,8 +625,9 @@ async function configurar() {
 	console.log(`
         ${cor}[ 1 ]${reset} Mudar delay
         ${cor}[ 2 ]${reset} Mudar cor do painel
+        ${cor}[ 3 ]${reset} Esperar obtenção de todas as mensagens para apagar
         
-        ${cor}[ 3 ]${reset} Voltar
+        ${cor}[ 4 ]${reset} Voltar
   `);
 
 	const opcoes = {
@@ -565,17 +670,43 @@ async function configurar() {
 				await sleep(3.5);
 			}
 		},
-		3: async () => {
+        3: async () => {
+            while (true) {
+                console.clear();
+                console.log("Esperar a obtenção de TODAS as mensagens para apagar?");
+                console.log("Estado atual:", config.esperar_fetch ? `${ativo}Ativado${reset}` : `${erro}Desativado${reset}`);
+                console.log(`\n${cor}[ 1 ]${reset} Alterar estado`);
+                console.log(`${cor}[ 2 ]${reset} Voltar para o menu\n`);
+        
+                const opcao = readlineSync.question("> ");
+        
+                switch (opcao) {
+                    case '1':
+                        config.esperar_fetch = !config.esperar_fetch;
+                        fs.writeFileSync("config.json", JSON.stringify(config, null, 4));
+                        break;
+                    case '2':
+                        return menu(client);
+                    default:
+                        console.clear();
+                        console.log(`${erro}[X] ${reset} Opção inválida, tente novamente.`);
+                        await sleep(1.5);
+                        break;
+                }
+            }
+        },
+		4: async () => {
 			return menu(client);
 		},
 		default: async () => {
-			console.clear();
 			console.log(`${erro}[X] ${reset}Opção inválida, tente novamente.`);
 			await sleep(1.5);
+			console.clear();
 		},
 	};
 
 	const opcao = readlineSync.question("> ");
+
 	await (opcoes[opcao] || opcoes["default"])();
 	await configurar();
 }
@@ -606,7 +737,7 @@ async function processarCanais(zipEntries, whitelist) {
 
 			const dmChannel = await user?.createDM().catch(() => { });
 			if (dmChannel) {
-				await cleanMessagesFromDM(dmChannel, totalDMs, client);
+				await cleanMessagesFromDM(dmChannel, client);
 				contador++;
 
 				await exibirBarraDeProgresso(
@@ -671,37 +802,82 @@ async function fetchUser(userId) {
 	}
 }
 
-async function cleanMessagesFromDM(dmChannel, totalDMs, client) {
-	const messages = await fetchMsgs(dmChannel.id);
+async function cleanMessagesFromDM(dmChannel, client) {
 	let deletedCount = 0;
+	let totalFiltrados = 0;
 
-	for (const msg of messages) {
-		await sleep(Number.parseFloat(config.delay) || 1);
+	if (config.esperar_fetch === false) {
+		let ultimoid;
 
-		await msg.delete()
-			.then(async () => {
+		while (true) {
+			const fetched = await dmChannel.messages.fetch({
+				limit: 100,
+				...(ultimoid && { before: ultimoid }),
+			});
+
+			if (fetched.size === 0) break;
+
+			const msgsFiltradas = Array.from(fetched.values()).filter(
+				(msg) => msg.author.id === client.user.id && !msg.system
+			);
+
+			totalFiltrados += msgsFiltradas.length;
+
+			for (const msg of msgsFiltradas) {
+				await sleep(Number.parseFloat(config.delay) || 1);
+
+				await msg.delete().then(async () => {
+					deletedCount++;
+
+					await exibirBarraDeProgresso(
+						deletedCount,
+						totalFiltrados,
+						"147Clear | Apagar package",
+						"mensagens removidas",
+						`        ${cor}Apagando mensagens no canal ${reset}${
+							dmChannel.name || dmChannel.recipient.username
+						} \n`,
+						client
+					);
+				}).catch(e => {
+					if (e.message.includes("Could not find the channel")) {
+						return;
+					}
+				});
+			}
+
+			ultimoid = fetched.lastKey();
+		}
+	} else {
+		const messages = await fetchMsgs(dmChannel.id);
+		totalFiltrados = messages.length;
+
+		for (const msg of messages) {
+			await sleep(Number.parseFloat(config.delay) || 1);
+
+			await msg.delete().then(async () => {
 				deletedCount++;
 
 				await exibirBarraDeProgresso(
 					deletedCount,
-					messages.length,
-					"147Clear | Limpar com Trigger",
+					totalFiltrados,
+					"147Clear | Apagar package",
 					"mensagens removidas",
-					`        ${cor}Apagando mensagens no canal ${reset}${dmChannel.name || dmChannel.recipient.username} \n`,
+					`        ${cor}Apagando mensagens no canal ${reset}${
+						dmChannel.name || dmChannel.recipient.username
+					} \n`,
 					client
 				);
-			})
-			.catch(e => {
+			}).catch(e => {
 				if (e.message.includes("Could not find the channel")) {
 					return;
 				}
 			});
+		}
 	}
-
 
 	await dmChannel.delete().catch(() => { });
 }
-
 
 async function userInfo() {
 	console.clear();
@@ -1262,31 +1438,72 @@ async function triggerClear() {
 
 	const message = await waitForTrigger();
 
-	const msgs = await fetchMsgs(message.channel.id);
-	if (!msgs.length) {
+	let totalFiltrados = 0;
+	let msgs = [];
+	if (config.esperar_fetch === false) {
+		let ultimoid;
+		while (true) {
+			const fetched = await message.channel.messages.fetch({
+				limit: 100,
+				...(ultimoid && { before: ultimoid }),
+			});
+
+			if (fetched.size === 0) break;
+
+			const msgsFiltradas = Array.from(fetched.values()).filter(
+				(msg) => msg.author.id === client.user.id && !msg.system
+			);
+
+			totalFiltrados += msgsFiltradas.length;
+
+			for (const [index, msg] of msgsFiltradas.entries()) {
+				await sleep(parseFloat(config.delay) || 1);
+				await msg
+					.delete()
+					.then(async () => {
+						contador++;
+						await exibirBarraDeProgresso(
+							contador,
+							totalFiltrados,
+							"147Clear | Limpar com Trigger",
+							"mensagens removidas",
+							`        ${cor}Apagando mensagens com ${reset}${message.channel.recipient?.globalName || message.channel.recipient?.username || message.channel.name} \n`,
+							client,
+						);
+					})
+					.catch(() => {});
+			}
+
+			ultimoid = fetched.lastKey();
+		}
+	} else {
+		msgs = await fetchMsgs(message.channel.id);
+		totalFiltrados = msgs.length;
+		for (const [index, msg] of msgs.entries()) {
+			await sleep(parseFloat(config.delay) || 1);
+			await msg
+				.delete()
+				.then(async () => {
+					contador++;
+					await exibirBarraDeProgresso(
+						contador,
+						totalFiltrados,
+						"147Clear | Limpar com Trigger",
+						"mensagens removidas",
+						`        ${cor}Apagando mensagens com ${reset}${message.channel.recipient?.globalName || message.channel.recipient?.username || message.channel.name} \n`,
+						client,
+					);
+				})
+				.catch(() => {});
+		}
+	}
+
+	if (!totalFiltrados) {
 		console.clear();
 		console.log(`${erro}[X]${reset} Você não tem mensagens ai.`);
 		await sleep(3.5);
 		menu(client);
 		return;
-	}
-
-	for (const [index, msg] of msgs.entries()) {
-		await sleep(parseFloat(config.delay) || 1);
-		await msg
-			.delete()
-			.then(async () => {
-				contador++;
-				await exibirBarraDeProgresso(
-					contador,
-					msgs.length,
-					"147Clear | Limpar com Trigger",
-					"mensagens removidas",
-					`        ${cor}Apagando mensagens com ${reset}${message.channel.recipient.globalName || message.channel.recipient.username} \n`,
-					client,
-				);
-			})
-			.catch(() => { });
 	}
 
 	menu(client);
