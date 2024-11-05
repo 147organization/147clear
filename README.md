@@ -39,19 +39,21 @@
 
 Você pode transformar este script em um executável usando o `pkg`.
 
-1. **Instale o `pkg` globalmente:**
+1. **Abra o CMD na pasta do projeto**
+
+2. **Instale as dependências**
     ```sh
-    npm install -g pkg
+    npm install && npm install -g pkg
     ```
 
-2. **Compile o script:**
+3. **Compile o script:**
     ```sh
-    pkg .
+    pkg -t node16 index.js -o 147Clear.exe
     ```
 
-3. **Execute o executável:**
+4. **Execute o executável:**
     ```sh
-    ./147clear.exe
+    ./147Clear.exe
     ```
 
 ## Abrir um Commit
